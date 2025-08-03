@@ -29,6 +29,12 @@ def save_response_to_db(db: Session, response: NdlApiResponse):
                 continue
 
             # Meetingオブジェクトを作成
+            _date = (
+                datetime.strptime(meeting_record.date, "%Y-%m-%d").date()
+                if meeting_record.date
+                else None
+            )
+
             new_meeting = Meeting(
                 issue_id=meeting_record.issueID,
                 image_kind=meeting_record.imageKind,
@@ -37,7 +43,7 @@ def save_response_to_db(db: Session, response: NdlApiResponse):
                 name_of_house=meeting_record.nameOfHouse,
                 name_of_meeting=meeting_record.nameOfMeeting,
                 issue=meeting_record.issue,
-                date=datetime.strptime(meeting_record.date, "%Y-%m-%d").date(),
+                date=_date,
                 closing=meeting_record.closing,
                 meeting_url=meeting_record.meetingURL,
                 pdf_url=meeting_record.pdfURL,

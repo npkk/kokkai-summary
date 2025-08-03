@@ -4,17 +4,18 @@ from sqlalchemy.orm import declarative_base
 
 Base = declarative_base()
 
+
 class Meeting(Base):
-    __tablename__ = 'meetings'
+    __tablename__ = "meetings"
 
     issue_id = Column(String, primary_key=True, unique=True, nullable=False)
     image_kind = Column(String, nullable=False)
     search_object = Column(Integer, nullable=False)
     session = Column(Integer, nullable=False)
     name_of_house = Column(String, nullable=False)
-    name_of_meeting = Column(String, nullable=False)
+    name_of_meeting = Column(String, nullable=True)
     issue = Column(String, nullable=False)
-    date = Column(Date, nullable=False)
+    date = Column(Date, nullable=True)
     closing = Column(String, nullable=True)
     meeting_url = Column(String, nullable=False)
     pdf_url = Column(String, nullable=True)
@@ -23,9 +24,9 @@ class Meeting(Base):
 
 
 class Speech(Base):
-    __tablename__ = 'speeches'
+    __tablename__ = "speeches"
 
-    issue_id = Column(String, ForeignKey('meetings.issue_id'), nullable=False)
+    issue_id = Column(String, ForeignKey("meetings.issue_id"), nullable=False)
     speech_id = Column(String, primary_key=True, unique=True, nullable=False)
     speech_order = Column(Integer, nullable=False)
     speaker = Column(String)
