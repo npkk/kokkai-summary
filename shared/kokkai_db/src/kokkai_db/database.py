@@ -4,7 +4,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.engine import Engine
 
-from .db_schema import Base
+from kokkai_db.schema import Base
 
 # .envファイルから環境変数を読み込む
 load_dotenv()

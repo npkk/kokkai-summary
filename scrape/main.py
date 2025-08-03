@@ -2,10 +2,10 @@ import asyncio
 from argparse import ArgumentParser
 
 # libディレクトリ内のモジュールをインポート
-from lib.api_client import NdlApiClient
-from lib.crud import save_response_to_db
-from lib.database import SessionLocal, create_tables
-from lib.request_schema import SpeechRequestParams
+from src.api_client import NdlApiClient
+from src.crud import save_response_to_db
+from kokkai_db.database import SessionLocal, create_tables
+from src.request_schema import SpeechRequestParams
 
 
 async def main():
@@ -43,7 +43,7 @@ async def main():
                 sessionFrom=int(args.session),
                 startRecord=next_record_position,
                 maximumRecords=10,
-            ) # type: ignore (謎エラーのため)
+            )  # type: ignore (謎エラーのため)
             api_response = await client.fetch_meeting_records(params=request_params)
 
             if api_response and api_response.meetingRecord:

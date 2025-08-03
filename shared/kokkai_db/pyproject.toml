@@ -1,0 +1,16 @@
+[project]
+name = "kokkai-db"
+version = "0.1.0"
+description = "Database schema for Kokkai Summary"
+readme = "README.md"
+authors = [
+    { name = "npkk", email = "kob4.nemu@gmail.com" }
+]
+requires-python = ">=3.13"
+dependencies = [
+    "sqlalchemy>=2.0.0"
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"

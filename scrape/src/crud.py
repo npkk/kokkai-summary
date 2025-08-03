@@ -1,7 +1,7 @@
 from datetime import datetime
 from sqlalchemy.orm import Session
 
-from .db_schema import Meeting, Speech
+from kokkai_db.schema import Meeting, Speech
 from .response_schema import NdlApiResponse
 
 
