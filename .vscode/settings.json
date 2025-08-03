@@ -1,0 +1,7 @@
+{
+    "cSpell.enabled": false,
+    "[python]": {
+        "editor.defaultFormatter": "charliermarsh.ruff",
+        "editor.formatOnSave": true,
+    },
+}
