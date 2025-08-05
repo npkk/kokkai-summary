@@ -11,4 +11,4 @@ dependencies = [
 ]
 
 [tool.uv.sources]
-kokkai-db = { path = "../shared/kokkai_db" }
+kokkai-db = { path = "../db" }

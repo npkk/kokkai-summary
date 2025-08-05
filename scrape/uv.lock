@@ -126,7 +126,7 @@ wheels = [
 [[package]]
 name = "kokkai-db"
 version = "0.1.0"
-source = { directory = "../shared/kokkai_db" }
+source = { directory = "../db" }
 dependencies = [
     { name = "sqlalchemy" },
 ]
@@ -224,7 +224,7 @@ requires-dist = [
     { name = "argparse", specifier = ">=1.4.0" },
     { name = "dotenv", specifier = ">=0.9.9" },
     { name = "httpx", specifier = ">=0.28.1" },
-    { name = "kokkai-db", directory = "../shared/kokkai_db" },
+    { name = "kokkai-db", directory = "../db" },
     { name = "psycopg2-binary", specifier = ">=2.9.10" },
     { name = "pydantic", specifier = ">=2.11.7" },
     { name = "sqlalchemy", specifier = ">=2.0.42" },

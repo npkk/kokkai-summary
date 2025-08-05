@@ -170,7 +170,7 @@ wheels = [
 [[package]]
 name = "kokkai-db"
 version = "0.1.0"
-source = { directory = "../shared/kokkai_db" }
+source = { directory = "../db" }
 dependencies = [
     { name = "sqlalchemy" },
 ]
@@ -312,7 +312,7 @@ dependencies = [
 [package.metadata]
 requires-dist = [
     { name = "google-genai", specifier = ">=1.28.0" },
-    { name = "kokkai-db", directory = "../shared/kokkai_db" },
+    { name = "kokkai-db", directory = "../db" },
     { name = "sqlalchemy", specifier = ">=2.0.42" },
 ]
 

@@ -8,7 +8,7 @@
 			"path": "../scrape",
 		},
 		{
-			"path": "../shared",
+			"path": "../db",
 		},
 		{
 			"path": "../summary",

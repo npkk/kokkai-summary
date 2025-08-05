@@ -13,6 +13,6 @@
         "scrape": true,
         "summary": true,
         "web": true,
-        "shared": true,
+        "db": true,
     }
 }
