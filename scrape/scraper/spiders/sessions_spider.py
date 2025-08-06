@@ -3,6 +3,7 @@ import re
 from datetime import datetime
 
 import scrapy
+
 from scraper.items import SessionItem
 
 
