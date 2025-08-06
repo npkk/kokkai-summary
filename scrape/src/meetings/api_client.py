@@ -1,8 +1,10 @@
-import httpx
 from typing import Optional
-from .response_schema import NdlApiResponse
-from .request_schema import SpeechRequestParams
+
+import httpx
 from pydantic import ValidationError
+
+from .request_schema import SpeechRequestParams
+from .response_schema import NdlApiResponse
 
 
 class NdlApiClient:

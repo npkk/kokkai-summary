@@ -1,11 +1,12 @@
 import asyncio
 from argparse import ArgumentParser
 
-# libディレクトリ内のモジュールをインポート
-from src.api_client import NdlApiClient
-from src.crud import save_response_to_db
 from kokkai_db.database import SessionLocal, create_tables
-from src.request_schema import SpeechRequestParams
+
+# libディレクトリ内のモジュールをインポート
+from src.meetings.api_client import NdlApiClient
+from src.meetings.crud import save_response_to_db
+from src.meetings.request_schema import SpeechRequestParams
 
 
 async def main():

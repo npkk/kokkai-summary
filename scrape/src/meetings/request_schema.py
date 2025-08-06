@@ -1,7 +1,8 @@
-from pydantic import BaseModel, Field, field_validator, ConfigDict
-from typing import Optional
-from enum import Enum
 import re
+from enum import Enum
+from typing import Optional
+
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
 class NameOfHouse(str, Enum):
