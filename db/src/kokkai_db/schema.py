@@ -1,43 +1,91 @@
-from sqlalchemy import Column, Integer, String, Text, Date, ForeignKey
-from sqlalchemy.orm import relationship
-from sqlalchemy.orm import declarative_base
+from __future__ import annotations
 
-Base = declarative_base()
+from datetime import date
+
+from sqlalchemy import Date, ForeignKey, Integer, String, Text
+from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
+
+
+class Base(DeclarativeBase):
+    pass
 
 
 class Meeting(Base):
+    """
+    会議
+    """
+
     __tablename__ = "meetings"
 
-    issue_id = Column(String, primary_key=True, unique=True, nullable=False)
-    image_kind = Column(String, nullable=False)
-    search_object = Column(Integer, nullable=False)
-    session = Column(Integer, nullable=False)
-    name_of_house = Column(String, nullable=False)
-    name_of_meeting = Column(String, nullable=True)
-    issue = Column(String, nullable=False)
-    date = Column(Date, nullable=True)
-    closing = Column(String, nullable=True)
-    meeting_url = Column(String, nullable=False)
-    pdf_url = Column(String, nullable=True)
+    issue_id: Mapped[str] = mapped_column(
+        String, primary_key=True, unique=True, nullable=False
+    )
+    image_kind: Mapped[str] = mapped_column(String, nullable=False)
+    search_object: Mapped[int] = mapped_column(Integer, nullable=False)
+    session: Mapped[int] = mapped_column(Integer, nullable=False)
+    name_of_house: Mapped[str] = mapped_column(String, nullable=False)
+    name_of_meeting: Mapped[str | None] = mapped_column(String, nullable=True)
+    issue: Mapped[str] = mapped_column(String, nullable=False)
+    date: Mapped[date | None] = mapped_column(Date, nullable=True)
+    closing: Mapped[str | None] = mapped_column(String, nullable=True)
+    meeting_url: Mapped[str] = mapped_column(String, nullable=False)
+    pdf_url: Mapped[str | None] = mapped_column(String, nullable=True)
 
-    speeches = relationship("Speech", back_populates="meeting")
+    speeches: Mapped[list[Speech]] = relationship("Speech", back_populates="meeting")
 
 
 class Speech(Base):
+    """
+    発言
+    """
+
     __tablename__ = "speeches"
 
-    issue_id = Column(String, ForeignKey("meetings.issue_id"), nullable=False)
-    speech_id = Column(String, primary_key=True, unique=True, nullable=False)
-    speech_order = Column(Integer, nullable=False)
-    speaker = Column(String)
-    speaker_yomi = Column(String)
-    speaker_group = Column(String)
-    speaker_position = Column(String)
-    speaker_role = Column(String)
-    speech = Column(Text)
-    start_page = Column(Integer)
-    create_time = Column(String)
-    update_time = Column(String)
-    speech_url = Column(String, nullable=False)
+    issue_id: Mapped[str] = mapped_column(
+        String, ForeignKey("meetings.issue_id"), nullable=False
+    )
+    speech_id: Mapped[str] = mapped_column(
+        String, primary_key=True, unique=True, nullable=False
+    )
+    speech_order: Mapped[int] = mapped_column(Integer, nullable=False)
+    speaker: Mapped[str | None] = mapped_column(String)
+    speaker_yomi: Mapped[str | None] = mapped_column(String)
+    speaker_group: Mapped[str | None] = mapped_column(String)
+    speaker_position: Mapped[str | None] = mapped_column(String)
+    speaker_role: Mapped[str | None] = mapped_column(String)
+    speech: Mapped[str | None] = mapped_column(Text)
+    start_page: Mapped[int | None] = mapped_column(Integer)
+    create_time: Mapped[str | None] = mapped_column(String)
+    update_time: Mapped[str | None] = mapped_column(String)
+    speech_url: Mapped[str] = mapped_column(String, nullable=False)
 
-    meeting = relationship("Meeting", back_populates="speeches")
+    meeting: Mapped[Meeting] = relationship("Meeting", back_populates="speeches")
+
+
+class Summary(Base):
+    """
+    会議ごとの要約
+    """
+
+    __tablename__ = "summaries"
+
+    issue_id: Mapped[str] = mapped_column(
+        String, ForeignKey("meetings.issue_id"), primary_key=True, nullable=False
+    )
+    summary: Mapped[str | None] = mapped_column(Text)
+    model: Mapped[str | None] = mapped_column(String, primary_key=True)
+    create_time: Mapped[str | None] = mapped_column(String)
+    update_time: Mapped[str | None] = mapped_column(String)
+
+
+class Session(Base):
+    """
+    国会回次のマスタ
+    """
+
+    __tablename__ = "sessions"
+
+    session = mapped_column(Integer, primary_key=True, nullable=False)
+    name = mapped_column(String, nullable=False)
+    start_date = mapped_column(Date, nullable=False)
+    end_date = mapped_column(Date, nullable=False)
