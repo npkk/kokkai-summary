@@ -11,5 +11,31 @@ services:
     volumes:
       - db_data:/var/lib/postgresql/data
 
+  api:
+    build:
+      context: .
+      dockerfile: api/Dockerfile
+    ports:
+      - "4000:8000"
+    links:
+      - db
+    develop:
+      watch:
+        - action: sync
+          path: api
+          target: /app/api
+          ignore:
+            - __pycache__
+            - Dockerfile
+        - action: sync
+          path: db
+          target: /app/db
+          ignore:
+            - __pycache__
+            - Dockerfile
+        - action: rebuild
+          path: api/Dockerfile
+    
+
 volumes:
   db_data:
