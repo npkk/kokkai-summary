@@ -85,7 +85,7 @@ class Session(Base):
 
     __tablename__ = "sessions"
 
-    session = mapped_column(Integer, primary_key=True, nullable=False)
-    name = mapped_column(String, nullable=False)
-    start_date = mapped_column(Date, nullable=False)
-    end_date = mapped_column(Date, nullable=False)
+    session: Mapped[int] = mapped_column(Integer, primary_key=True, nullable=False)
+    name: Mapped[str] = mapped_column(String, nullable=False)
+    start_date: Mapped[date] = mapped_column(Date, nullable=False)
+    end_date: Mapped[date] = mapped_column(Date, nullable=False)
