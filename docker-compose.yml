@@ -2,14 +2,18 @@ services:
   db:
     image: postgres:latest
     environment:
-      POSTGRES_USER: $POSTGRES_USER
-      POSTGRES_PASSWORD: $POSTGRES_PASSWORD
-      POSTGRES_DB: $POSTGRES_DB
+      POSTGRES_USER_FILE: /run/secrets/postgres_user
+      POSTGRES_PASSWORD_FILE: /run/secrets/postgres_password
+      POSTGRES_DB_FILE: /run/secrets/postgres_db
     restart: always
     ports:
       - "5432:5432"
     volumes:
       - db_data:/var/lib/postgresql/data
+    secrets:
+      - postgres_user
+      - postgres_password
+      - postgres_db
 
   api:
     build:
@@ -17,6 +21,8 @@ services:
       dockerfile: api/Dockerfile
     ports:
       - "4000:8000"
+    secrets:
+      - database_url
     links:
       - db
     develop:
@@ -79,3 +85,9 @@ secrets:
     file: ./secrets/database_url
   gemini_api_key:
     file: ./secrets/gemini_api_key
+  postgres_user:
+    file: ./secrets/postgres_user
+  postgres_password:
+    file: ./secrets/postgres_password
+  postgres_db:
+    file: ./secrets/postgres_db

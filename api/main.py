@@ -4,18 +4,21 @@ import strawberry
 from fastapi import FastAPI, Request
 from strawberry.fastapi import GraphQLRouter
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
-from dotenv import load_dotenv
 
 from app.graphql.resolvers import Query
 from app.graphql.dataloaders import DataLoaders
 
-# .envファイルから環境変数を読み込む
-load_dotenv()
+def get_secret(secret_name: str) -> str | None:
+    secret_path = f"/run/secrets/{secret_name}"
+    if os.path.exists(secret_path):
+        with open(secret_path, "r") as f:
+            return f.read().strip()
+    return os.environ.get(secret_name.upper())
 
-DATABASE_URL = os.environ.get("DATABASE_URL")
+DATABASE_URL = get_secret("database_url")
 
 if DATABASE_URL is None:
-    raise Exception("DATABASE_URL environment variable not set.")
+    raise Exception("DATABASE_URL secret or environment variable not set.")
 
 # 非同期エンジンを作成
 async_engine = create_async_engine(DATABASE_URL, echo=True)
@@ -50,3 +53,8 @@ async def root():
 
 
 app.include_router(graphql_app, prefix="/graphql")
+
+
+@app.on_event("shutdown")
+async def shutdown():
+    await async_engine.dispose()
