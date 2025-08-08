@@ -1,71 +1,57 @@
-import argparse
 import asyncio
+import time
+from datetime import datetime
 
-from kokkai_db.database import SessionLocal, create_tables
-from kokkai_db.schema import Meeting
-from sqlalchemy import select
+from kokkai_db.schema import Meeting, Speech, Summary
+from sqlalchemy import func
+from sqlalchemy.orm import Session
 
-from src.summary import get_summaries, make_summary
+from app.config import BATCH_SIZE
+from app.db.session import SessionLocal  # get_db_sessionではなくSessionLocalを直接使用
+from app.services.summary_service import make_summary  # make_summaryをインポート
 
 
-async def main():
-    """
-    コマンドライン引数で指定された国会回次の会議録の要約を作成し、
-    データベースに保存するメイン処理。
-    """
-    parser = argparse.ArgumentParser(
-        description="指定された回次の会議録の要約を作成し、DBに保存します。"
-    )
-    parser.add_argument(
-        "--session", type=int, required=True, help="要約を作成する国会の回次"
-    )
-    parser.add_argument(
-        "--skip-existing",
-        action="store_true",
-        help="既存の要約をスキップする",
-    )
-    args = parser.parse_args()
-
-    print(f"--- Start: Summarize session {args.session} ---")
-    create_tables()
-    db = SessionLocal()
+async def run_summary_job():
+    print(f"[{datetime.now()}] Starting summary job...")
+    db: Session = SessionLocal() # SessionLocalを直接呼び出す
     try:
-        # 指定された回次に該当する会議のIssueIDを取得
-        stmt = (
-            select(Meeting.issue_id)
-            .where(Meeting.session == args.session)
-            .where(Meeting.image_kind == "会議録")
-        )
-        issue_ids = db.execute(stmt).scalars().all()
+        # 既に要約済みのissue_idを取得
+        summarized_issue_ids = {
+            s.issue_id for s in db.query(Summary.issue_id).distinct().all()
+        }
 
-        if not issue_ids:
-            print(f"No meetings found for session {args.session}.")
+        # 未要約の会議録を回次最新順、文字数が多い順に取得
+        meetings_to_summarize = (
+            db.query(Meeting)
+            .join(Speech, Meeting.issue_id == Speech.issue_id)
+            .filter(Meeting.issue_id.notin_(summarized_issue_ids))
+            .group_by(Meeting.issue_id)
+            .order_by(
+                Meeting.session.desc(),
+                func.sum(func.length(Speech.speech)).desc()
+            )
+            .limit(BATCH_SIZE)
+            .all()
+        )
+
+        if not meetings_to_summarize:
+            print("No new meetings to summarize.")
             return
 
-        print(f"Found {len(issue_ids)} meetings for session {args.session}.")
+        for meeting in meetings_to_summarize:
+            issue_id = meeting.issue_id
+            print(f"Summarizing issue_id: {issue_id}")
+            await make_summary(issue_id, db)
+            db.commit()
+            print(f"Successfully summarized issue_id: {issue_id}")
+            time.sleep(5) # API呼び出し間の遅延
 
-        # 各会議録について要約を作成
-        for issue_id in issue_ids:
-            print(f"Processing: {issue_id}")
-            try:
-                summaries = get_summaries(issue_id, db)
-                if summaries and args.skip_existing:
-                    print(f"  - Skip: Summary already exists for {issue_id}.")
-                    continue
-                await make_summary(issue_id, db)
-                db.commit()
-                print(f"  - Success: Saved summary for {issue_id}.")
-
-            except Exception as e:
-                print(f"  - Error processing {issue_id}: {e}")
-                db.rollback()
-                break
-
+    except Exception as e:
+        db.rollback()
+        print(f"An error occurred during summary job: {e}")
     finally:
         db.close()
-
-    print(f"--- Finish: Summarize session {args.session} ---")
-
+    print(f"[{datetime.now()}] Summary job finished.")
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    asyncio.run(run_summary_job())
