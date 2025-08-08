@@ -1,0 +1,1 @@
+*/8 * * * * cd /app/summary && uv run /app/summary/main.py >> /tmp/cron.log 2>&1

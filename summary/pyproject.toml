@@ -19,3 +19,7 @@ kokkai-db = { path = "../db" }
 
 [tool.ruff]
 extend = '../ruff_config.toml'
+
+[tool.pyright]
+venvPath = "."
+venv = ".venv"

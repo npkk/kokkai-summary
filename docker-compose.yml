@@ -35,7 +35,47 @@ services:
             - Dockerfile
         - action: rebuild
           path: api/Dockerfile
-    
+
+  summary:
+    build:
+      context: .
+      dockerfile: summary/Dockerfile
+    secrets:
+      - database_url
+      - gemini_api_key
+    links:
+      - db
+    depends_on:
+      - db
+    restart: on-failure
+    develop:
+      watch:
+        - action: sync
+          path: summary
+          target: /app/summary
+          ignore:
+            - __pycache__
+            - Dockerfile
+            - cronjob
+        - action: sync
+          path: db
+          target: /app/db
+          ignore:
+            - __pycache__
+            - Dockerfile
+        - action: sync+exec
+          path: summary/cronjob
+          target: /etc/cron.d/summary-cron
+          exec:
+            command: cron -f
+        - action: rebuild
+          path: summary/Dockerfile
 
 volumes:
   db_data:
+
+secrets:
+  database_url:
+    file: ./secrets/database_url
+  gemini_api_key:
+    file: ./secrets/gemini_api_key
