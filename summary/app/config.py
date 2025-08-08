@@ -1,12 +1,15 @@
 import os
 
-from dotenv import load_dotenv
+def get_secret(secret_name: str) -> str | None:
+    secret_path = f"/run/secrets/{secret_name}"
+    if os.path.exists(secret_path):
+        with open(secret_path, "r") as f:
+            return f.read().strip()
+    return os.environ.get(secret_name.upper())
 
-load_dotenv()
-
-_gemini_api_key = os.environ.get("GEMINI_API_KEY")
+_gemini_api_key = get_secret("gemini_api_key")
 if _gemini_api_key is None:
-    raise ValueError("GEMINI_API_KEY environment variable not set.")
+    raise ValueError("GEMINI_API_KEY secret or environment variable not set.")
 GEMINI_API_KEY: str = _gemini_api_key
 
 MODEL: str = "gemini-2.5-flash"
@@ -64,9 +67,9 @@ PROMPT: str = """
 ```
 """
 
-_database_url = os.environ.get("DATABASE_URL")
+_database_url = get_secret("database_url")
 if _database_url is None:
-    raise ValueError("DATABASE_URL environment variable not set.")
+    raise ValueError("DATABASE_URL secret or environment variable not set.")
 DATABASE_URL: str = _database_url
 
 # API呼び出し制限関連の定数
