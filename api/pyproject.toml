@@ -1,0 +1,16 @@
+[project]
+name = "api"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "fastapi[standard]>=0.116.1",
+    "kokkai-db",
+    "psycopg[binary]>=3.2.9",
+    "sqlalchemy>=2.0.42",
+    "strawberry-graphql[fastapi]>=0.278.1",
+]
+
+[tool.uv.sources]
+kokkai-db = { path = "../db" }

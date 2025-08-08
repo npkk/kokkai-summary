@@ -12,7 +12,8 @@
         "**/Thumbs.db": true,
         "scrape": true,
         "summary": true,
-        "web": true,
+        "api": true,
         "db": true,
+        "web": true,
     }
 }

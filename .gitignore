@@ -76,3 +76,9 @@ cython_debug/
 
 # LSP config files
 pyrightconfig.json
+
+# log file
+*.log
+
+# prompt
+PROMPT.md
