@@ -83,5 +83,5 @@ pyrightconfig.json
 # prompt
 PROMPT.md
 
-# secret
-secrets/
+# pg dump
+*.dump

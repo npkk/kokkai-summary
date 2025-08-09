@@ -3,9 +3,9 @@ from datetime import date
 
 import strawberry
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+from sqlalchemy import select, and_
 
-from kokkai_db.schema import Meeting as DBMeeting, Speech as DBSpeech
+from kokkai_db.schema import Meeting as DBMeeting, Speech as DBSpeech, Session as DBSession, Summary as DBSummary
 from .dataloaders import DataLoaders
 
 
@@ -79,25 +79,41 @@ class Meeting:
     @strawberry.field
     async def summary(self, info) -> Optional[Summary]:
         dataloaders: DataLoaders = info.context["dataloaders"]
-        summary = await dataloaders.latest_summaries_by_issue_id.load(self.issue_id)
-        return Summary(**summary.__dict__) if summary else None
+        summary: Optional[DBSummary] = await dataloaders.latest_summaries_by_issue_id.load(self.issue_id)
+        if summary:
+            return Summary(
+                summary=summary.summary,
+                model=summary.model,
+                create_time=summary.create_time,
+                update_time=summary.update_time,
+            )
+        return None
 
     @strawberry.field
     async def session_info(self, info) -> Optional[Session]:
         dataloaders: DataLoaders = info.context["dataloaders"]
-        session_info = await dataloaders.sessions_by_session_number.load(self.session)
-        return Session(**session_info.__dict__) if session_info else None
+        session_info: Optional[DBSession] = await dataloaders.sessions_by_session_number.load(self.session)
+        if session_info:
+            return Session(
+                session=session_info.session,
+                name=session_info.name,
+                start_date=session_info.start_date,
+                end_date=session_info.end_date,
+            )
+        return None
 
 
 @strawberry.type
 class Query:
     @strawberry.field
-    async def meetings(self, info, issue_id: Optional[str] = None) -> List[Meeting]:
-        session: AsyncSession = info.context["session"]
+    async def meetings(self, info, session: int, issue_id: Optional[str] = None) -> List[Meeting]:
+        db_session: AsyncSession = info.context["session"]
+        
+        conditions = [DBMeeting.session == session]
         if issue_id:
-            db_meetings = (await session.execute(select(DBMeeting).where(DBMeeting.issue_id == issue_id))).scalars().all()
-        else:
-            db_meetings = (await session.execute(select(DBMeeting))).scalars().all()
+            conditions.append(DBMeeting.issue_id == issue_id)
+            
+        db_meetings = (await db_session.execute(select(DBMeeting).where(and_(*conditions)))).scalars().all()
         return [
             Meeting(
                 issue_id=m.issue_id,
