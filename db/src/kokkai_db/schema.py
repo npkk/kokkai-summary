@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-from datetime import date
+from datetime import date, datetime
 
-from sqlalchemy import Date, ForeignKey, Integer, String, Text
+from sqlalchemy import Date, DateTime, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
 
@@ -55,8 +55,8 @@ class Speech(Base):
     speaker_role: Mapped[str | None] = mapped_column(String)
     speech: Mapped[str | None] = mapped_column(Text)
     start_page: Mapped[int | None] = mapped_column(Integer)
-    create_time: Mapped[str | None] = mapped_column(String)
-    update_time: Mapped[str | None] = mapped_column(String)
+    create_time: Mapped[datetime | None] = mapped_column(DateTime)
+    update_time: Mapped[datetime | None] = mapped_column(DateTime)
     speech_url: Mapped[str] = mapped_column(String, nullable=False)
 
     meeting: Mapped[Meeting] = relationship("Meeting", back_populates="speeches")
@@ -74,8 +74,8 @@ class Summary(Base):
     )
     summary: Mapped[str | None] = mapped_column(Text)
     model: Mapped[str | None] = mapped_column(String, primary_key=True)
-    create_time: Mapped[str | None] = mapped_column(String)
-    update_time: Mapped[str | None] = mapped_column(String)
+    create_time: Mapped[datetime] = mapped_column(DateTime, nullable=False)
+    update_time: Mapped[datetime] = mapped_column(DateTime, nullable=False)
 
 
 class Session(Base):
