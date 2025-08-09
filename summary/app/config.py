@@ -1,11 +1,13 @@
 import os
 
+
 def get_secret(secret_name: str) -> str | None:
     secret_path = f"/run/secrets/{secret_name}"
     if os.path.exists(secret_path):
         with open(secret_path, "r") as f:
             return f.read().strip()
     return os.environ.get(secret_name.upper())
+
 
 _gemini_api_key = get_secret("gemini_api_key")
 if _gemini_api_key is None:
@@ -20,12 +22,6 @@ PROMPT: str = """
 ## 要約テンプレート
 
 ```markdown
-# 国会会議録要約
-
-## 会議名
-
-（ここに会議名を記述）
-
 ## 決議された事項
 
 * （決議事項1）

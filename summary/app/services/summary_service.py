@@ -1,4 +1,5 @@
 import os
+from datetime import datetime
 from typing import List
 
 from google.genai.types import GenerateContentResponse
@@ -63,12 +64,15 @@ def create_summary_record(issue_id: str, db: Session, response: GenerateContentR
     # response.textがNoneの場合を考慮
     summary_text_from_response = response.text if response.text is not None else ""
     cleaned_summary = clean_summary_text(summary_text_from_response)
+    
+    now = datetime.now() # 現在のタイムスタンプを取得
+
     new_summary = Summary(
         issue_id=issue_id,
         summary=cleaned_summary,
         model=MODEL, # app.configからインポートしたMODELを使用
-        create_time=response.create_time,
-        update_time=response.create_time,
+        create_time=now, # datetimeオブジェクトを渡す
+        update_time=now, # datetimeオブジェクトを渡す
     )
 
     db.add(new_summary)
