@@ -1,14 +1,29 @@
 from datetime import datetime
 
 from itemadapter import ItemAdapter
-from kokkai_db.database import SessionLocal
+from kokkai_db.database import create_engine_and_session
 from kokkai_db.schema import Meeting, Session, Speech
 from sqlalchemy.orm import Session as DbSession
 
+from .settings import DATABASE_URL
+
 
 class DatabasePipeline:
+    def __init__(self, session_local):
+        self.SessionLocal = session_local
+
+    @classmethod
+    def from_crawler(cls, crawler):
+        # settings = crawler.settings # settingsは不要
+        database_url = DATABASE_URL
+        if not database_url:
+            raise ValueError("DATABASE_URL environment variable not set.")
+
+        _, session_local = create_engine_and_session(database_url)
+        return cls(session_local)
+
     def open_spider(self, spider):
-        self.session: DbSession = SessionLocal()
+        self.session: DbSession = self.SessionLocal()
 
     def close_spider(self, spider):
         self.session.close()
@@ -16,11 +31,11 @@ class DatabasePipeline:
     def process_item(self, item, spider):
         adapter = ItemAdapter(item)
 
-        if spider.name == 'meetings_spider':
+        if spider.name == "meetings_spider":
             self._process_meeting_item(adapter, spider)
-        elif spider.name == 'sessions_spider':
+        elif spider.name == "sessions_spider":
             self._process_session_item(adapter, spider)
-        
+
         return item
 
     def _process_meeting_item(self, adapter, spider):
@@ -31,7 +46,9 @@ class DatabasePipeline:
             .first()
         )
         if existing_meeting:
-            spider.logger.info(f"Skipping: Meeting with issueID {adapter['issueID']} already exists.")
+            spider.logger.info(
+                f"Skipping: Meeting with issueID {adapter['issueID']} already exists."
+            )
             return
 
         # Meetingオブジェクトを作成
@@ -79,7 +96,9 @@ class DatabasePipeline:
             self.session.commit()
             spider.logger.info(f"Committed: Meeting with issueID {adapter['issueID']}")
         except Exception as e:
-            spider.logger.error(f"Database commit failed for issueID {adapter['issueID']}: {e}")
+            spider.logger.error(
+                f"Database commit failed for issueID {adapter['issueID']}: {e}"
+            )
             self.session.rollback()
             raise
 
@@ -111,6 +130,8 @@ class DatabasePipeline:
         try:
             self.session.commit()
         except Exception as e:
-            spider.logger.error(f"Database commit failed for session {adapter['session']}: {e}")
+            spider.logger.error(
+                f"Database commit failed for session {adapter['session']}: {e}"
+            )
             self.session.rollback()
             raise
