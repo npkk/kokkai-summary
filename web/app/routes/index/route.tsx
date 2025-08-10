@@ -220,7 +220,7 @@ export default function SearchPage() {
 				{meetings.map((meeting) => (
 					<button
 						type="button"
-						key={meeting.issueId}
+												key={meeting.issueId}
 						className="border p-4 mb-2 rounded-lg cursor-pointer text-left w-full bg-white dark:bg-gray-800 dark:text-gray-100"
 						onClick={() => {
 							navigate(`/summary/${meeting.issueId}`);

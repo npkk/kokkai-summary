@@ -7,7 +7,7 @@ from kokkai_db.schema import Meeting, Speech, Summary
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.config import MODEL  # MODELをインポート
+from app.config import MODEL
 from app.services.gemini_api import GeminiAPIClient
 from app.utils.text_processing import clean_summary_text
 

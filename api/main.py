@@ -47,7 +47,7 @@ graphql_app = GraphQLRouter(schema, context_getter=get_context)
 
 app = FastAPI()
 
-# CORS ミドルウェアの設定を追加
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],

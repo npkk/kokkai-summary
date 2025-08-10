@@ -49,9 +49,9 @@ const GET_MEETING_DETAILS_QUERY = `
 
 export default function SummaryPage() {
 	const { issueId } = useParams<{ issueId: string }>();
-	const [meeting, setMeeting] = useState<Meeting | null>(null); // meeting ステートを追加
-	const [loading, setLoading] = useState(true); // loading ステートを追加
-	const [error, setError] = useState<string | null>(null); // error ステートを追加
+	const [meeting, setMeeting] = useState<Meeting | null>(null);
+	const [loading, setLoading] = useState(true);
+	const [error, setError] = useState<string | null>(null);
 
 	useEffect(() => {
 		const fetchMeetingDetails = async () => {
