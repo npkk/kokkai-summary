@@ -1,5 +1,17 @@
 import { useParams, Link } from "react-router";
 import ReactMarkdown from "react-markdown";
+import {
+	H1,
+	H2,
+	P,
+	A,
+	Ul,
+	Ol,
+	Li,
+	Blockquote,
+	Code,
+	H3,
+} from "~/components/markdown";
 import { useState, useEffect } from "react"; // 追加
 import { graphqlRequest } from "~/lib/api"; // 追加
 
@@ -85,7 +97,7 @@ export default function SummaryPage() {
 	}
 
 	return (
-		<div className="p-4 bg-white text-gray-900 dark:bg-gray-900 dark:text-gray-100 min-h-screen">
+		<div className="p-4">
 			<Link
 				to="/"
 				className="text-blue-600 hover:underline mb-4 block dark:text-blue-400"
@@ -102,7 +114,22 @@ export default function SummaryPage() {
 
 			<div className="prose lg:prose-xl max-w-none dark:prose-invert">
 				{meeting.summary ? (
-					<ReactMarkdown>{meeting.summary.summary}</ReactMarkdown>
+					<ReactMarkdown
+						components={{
+							h1: H1,
+							h2: H2,
+							h3: H3,
+							p: P,
+							a: A,
+							ul: Ul,
+							ol: Ol,
+							li: Li,
+							blockquote: Blockquote,
+							code: Code,
+						}}
+					>
+						{meeting.summary.summary}
+					</ReactMarkdown>
 				) : (
 					<p>No summary available for this meeting.</p>
 				)}

@@ -28,6 +28,9 @@
 		}
 	},
 	"assist": {
-		"enabled": true
+		"enabled": true,
+		"actions": {
+			"recommended": true
+		}
 	}
 }

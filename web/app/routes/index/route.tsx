@@ -1,13 +1,13 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
+import {
+	MeetingNameDropdown,
+	SessionDropdown,
+} from "~/components/pulldown";
 import { graphqlRequest } from "~/lib/api";
+import type { Session } from "~/components/pulldown";
 
 // Define types for our data based on the API schema
-interface Session {
-	session: number;
-	name: string;
-}
-
 interface Meeting {
 	issueId: string;
 	session: number;
@@ -76,7 +76,7 @@ export default function SearchPage() {
 	const [meetings, setMeetings] = useState<Meeting[]>([]);
 	const [loading, setLoading] = useState(false);
 
-	const navigate = useNavigate(); // useNavigate を追加
+	const navigate = useNavigate();
 
 	// Fetch sessions
 	useEffect(() => {
@@ -125,7 +125,7 @@ export default function SearchPage() {
 					session: selectedSession,
 					nameOfMeeting: selectedMeetingName,
 					nameOfHouse: selectedHouses.length === 1 ? selectedHouses[0] : null,
-											hasSummary: !hasSummary,
+					hasSummary: !hasSummary,
 				},
 			);
 			setMeetings(data.meetings);
@@ -143,48 +143,24 @@ export default function SearchPage() {
 	};
 
 	return (
-		<div className="p-4 bg-white text-gray-900 dark:bg-gray-900 dark:text-gray-100 min-h-screen">
+		<div className="p-4">
 			<h1 className="text-2xl font-bold mb-4">国会会議録検索</h1>
 
 			{/* Session Dropdown */}
-			<div className="mb-4">
-				<label htmlFor="session-select" className="font-semibold mr-2">
-					回次:
-				</label>
-				<select
-					id="session-select"
-					value={selectedSession || ""}
-					onChange={(e) => setSelectedSession(Number(e.target.value))}
-					className="border rounded p-2 bg-white dark:bg-gray-700 dark:text-gray-100"
-				>
-					{sessions.map((s) => (
-						<option key={s.session} value={s.session}>
-							{s.name}
-						</option>
-					))}
-				</select>
-			</div>
+			<SessionDropdown
+				sessions={sessions}
+				selectedSession={selectedSession}
+				onSessionChange={setSelectedSession}
+			/>
 
 			{/* Meeting Name Dropdown */}
 			{selectedSession && (
-				<div className="mb-4">
-					<label htmlFor="meeting-name-select" className="font-semibold mr-2">
-						会議名:
-					</label>
-					<select
-						id="meeting-name-select"
-						value={selectedMeetingName || ""}
-						onChange={(e) => setSelectedMeetingName(e.target.value)}
-						className="border rounded p-2 bg-white dark:bg-gray-700 dark:text-gray-100"
-					>
-						<option value="">全て</option>
-						{meetingNames.map((name) => (
-							<option key={name} value={name}>
-								{name}
-							</option>
-						))}
-					</select>
-				</div>
+				<MeetingNameDropdown
+					meetingNames={meetingNames}
+					selectedMeetingName={selectedMeetingName}
+					onMeetingNameChange={setSelectedMeetingName}
+					disabled={!selectedSession}
+				/>
 			)}
 
 			{/* Filters */}
@@ -198,9 +174,9 @@ export default function SearchPage() {
 							className={`px-4 py-2 text-sm font-medium border rounded-l-lg ${
 								selectedHouses.includes("衆議院")
 									? "bg-blue-500 text-white"
-									: "bg-gray-200 text-gray-900 dark:bg-gray-700 dark:text-gray-100" // dark mode styles
+									: "bg-gray-200 text-gray-900 dark:bg-gray-700 dark:text-gray-100"
 							}`}
-						onClick={() => handleHouseChange("衆議院")}
+							onClick={() => handleHouseChange("衆議院")}
 						>
 							衆議院
 						</button>
@@ -209,9 +185,9 @@ export default function SearchPage() {
 							className={`px-4 py-2 text-sm font-medium border-t border-b border-r rounded-r-lg ${
 								selectedHouses.includes("参議院")
 									? "bg-blue-500 text-white"
-									: "bg-gray-200 text-gray-900 dark:bg-gray-700 dark:text-gray-100" // dark mode styles
+									: "bg-gray-200 text-gray-900 dark:bg-gray-700 dark:text-gray-100"
 							}`}
-						onClick={() => handleHouseChange("参議院")}
+							onClick={() => handleHouseChange("参議院")}
 						>
 							参議院
 						</button>
@@ -243,12 +219,12 @@ export default function SearchPage() {
 			<div className="mt-6">
 				{meetings.map((meeting) => (
 					<button
-						type="button" // type="button" を追加
+						type="button"
 						key={meeting.issueId}
-						className="border p-4 mb-2 rounded-lg cursor-pointer text-left w-full bg-white dark:bg-gray-800 dark:text-gray-100" // text-left w-full を追加
+						className="border p-4 mb-2 rounded-lg cursor-pointer text-left w-full bg-white dark:bg-gray-800 dark:text-gray-100"
 						onClick={() => {
 							navigate(`/summary/${meeting.issueId}`);
-						}} // onClick ハンドラを追加
+						}}
 					>
 						<h2 className="font-bold">{meeting.nameOfMeeting}</h2>
 						<p>{meeting.issue}</p>
