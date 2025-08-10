@@ -53,3 +53,4 @@ class Meeting:
 class Query:
     meetings: List[Meeting]
     speeches: List[Speech]
+    sessions: List[Session] # 追加

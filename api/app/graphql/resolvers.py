@@ -3,7 +3,7 @@ from datetime import date
 
 import strawberry
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, and_
+from sqlalchemy import select, and_, distinct
 
 from kokkai_db.schema import Meeting as DBMeeting, Speech as DBSpeech, Session as DBSession, Summary as DBSummary
 from .dataloaders import DataLoaders
@@ -106,14 +106,37 @@ class Meeting:
 @strawberry.type
 class Query:
     @strawberry.field
-    async def meetings(self, info, session: int, issue_id: Optional[str] = None) -> List[Meeting]:
+    async def meetings(
+        self,
+        info,
+        session: Optional[int] = None,
+        issue_id: Optional[str] = None,
+        name_of_house: Optional[str] = None,
+        name_of_meeting: Optional[str] = None,
+        has_summary: Optional[bool] = False,
+    ) -> List[Meeting]:
         db_session: AsyncSession = info.context["session"]
-        
-        conditions = [DBMeeting.session == session]
+
+        if not session and not issue_id:
+            raise ValueError("Either 'session' or 'issue_id' must be provided.")
+
+        conditions = []
+        if session:
+            conditions.append(DBMeeting.session == session)
         if issue_id:
             conditions.append(DBMeeting.issue_id == issue_id)
-            
-        db_meetings = (await db_session.execute(select(DBMeeting).where(and_(*conditions)))).scalars().all()
+        if name_of_house:
+            conditions.append(DBMeeting.name_of_house == name_of_house)
+        if name_of_meeting:
+            conditions.append(DBMeeting.name_of_meeting == name_of_meeting)
+
+        query = select(DBMeeting)
+        if has_summary:
+            query = query.join(DBSummary, DBMeeting.issue_id == DBSummary.issue_id)
+
+        db_meetings = (
+            (await db_session.execute(query.where(and_(*conditions)))).scalars().all()
+        )
         return [
             Meeting(
                 issue_id=m.issue_id,
@@ -135,7 +158,15 @@ class Query:
     async def speeches(self, info, speech_id: Optional[str] = None) -> List[Speech]:
         session: AsyncSession = info.context["session"]
         if speech_id:
-            db_speeches = (await session.execute(select(DBSpeech).where(DBSpeech.speech_id == speech_id))).scalars().all()
+            db_speeches = (
+                (
+                    await session.execute(
+                        select(DBSpeech).where(DBSpeech.speech_id == speech_id)
+                    )
+                )
+                .scalars()
+                .all()
+            )
         else:
             db_speeches = (await session.execute(select(DBSpeech))).scalars().all()
         return [
@@ -155,3 +186,33 @@ class Query:
             )
             for s in db_speeches
         ]
+
+    @strawberry.field
+    async def sessions(self, info) -> List[Session]:
+        db_session: AsyncSession = info.context["session"]
+        db_sessions = (await db_session.execute(select(DBSession))).scalars().all()
+        return [
+            Session(
+                session=s.session,
+                name=s.name,
+                start_date=s.start_date,
+                end_date=s.end_date,
+            )
+            for s in db_sessions
+        ]
+
+    @strawberry.field
+    async def meeting_names(self, info, session: int) -> List[str]:
+        db_session: AsyncSession = info.context["session"]
+        db_meeting_names = (
+            (
+                await db_session.execute(
+                    select(distinct(DBMeeting.name_of_meeting)).where(
+                        DBMeeting.session == session
+                    )
+                )
+            )
+            .scalars()
+            .all()
+        )
+        return [name for name in db_meeting_names if name]

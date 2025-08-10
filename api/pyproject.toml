@@ -7,6 +7,7 @@ requires-python = ">=3.13"
 dependencies = [
     "fastapi[standard]>=0.116.1",
     "kokkai-db",
+    "libcst>=1.8.2",
     "psycopg[binary]>=3.2.9",
     "sqlalchemy>=2.0.42",
     "strawberry-graphql[fastapi]>=0.278.1",
