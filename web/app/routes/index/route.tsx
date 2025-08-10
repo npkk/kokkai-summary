@@ -1,9 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
-import {
-	MeetingNameDropdown,
-	SessionDropdown,
-} from "~/components/pulldown";
+import { MeetingNameDropdown, SessionDropdown } from "~/components/pulldown";
 import { graphqlRequest } from "~/lib/api";
 import type { Session } from "~/components/pulldown";
 
@@ -220,7 +217,7 @@ export default function SearchPage() {
 				{meetings.map((meeting) => (
 					<button
 						type="button"
-												key={meeting.issueId}
+						key={meeting.issueId}
 						className="border p-4 mb-2 rounded-lg cursor-pointer text-left w-full bg-white dark:bg-gray-800 dark:text-gray-100"
 						onClick={() => {
 							navigate(`/summary/${meeting.issueId}`);
@@ -228,7 +225,7 @@ export default function SearchPage() {
 					>
 						<h2 className="font-bold">{meeting.nameOfMeeting}</h2>
 						<p>{meeting.issue}</p>
-						<p className="text-sm text-gray-600">
+						<p className="text-sm text-gray-600 dark:text-gray-400">
 							{meeting.nameOfHouse} -{" "}
 							{new Date(meeting.date).toLocaleDateString()}
 						</p>

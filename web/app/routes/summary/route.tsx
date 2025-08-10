@@ -11,6 +11,7 @@ import {
 	Blockquote,
 	Code,
 	H3,
+	Hr,
 } from "~/components/markdown";
 import { useState, useEffect } from "react"; // 追加
 import { graphqlRequest } from "~/lib/api"; // 追加
@@ -119,6 +120,7 @@ export default function SummaryPage() {
 							h1: H1,
 							h2: H2,
 							h3: H3,
+							hr: Hr,
 							p: P,
 							a: A,
 							ul: Ul,
