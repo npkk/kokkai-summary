@@ -7,7 +7,7 @@ from kokkai_db.schema import Meeting, Speech, Summary
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.config import MODEL
+from app.config import MODEL, PROMPT_VERSION
 from app.services.gemini_api import GeminiAPIClient
 from app.utils.text_processing import clean_summary_text
 
@@ -36,6 +36,7 @@ def make_text(issue_id: str, db: Session) -> str:
         print(f"An error occurred during DB operation in make_text: {e}")
         raise
 
+
 async def make_summary(issue_id: str, db: Session):
     """
     要約を作成し、DBに保存する
@@ -57,26 +58,32 @@ async def make_summary(issue_id: str, db: Session):
         print(f"An error occurred during summary creation: {e}")
         raise
 
-def create_summary_record(issue_id: str, db: Session, response: GenerateContentResponse):
+
+def create_summary_record(
+    issue_id: str, db: Session, response: GenerateContentResponse
+):
     """
     生成された要約をDBに保存する
     """
     # response.textがNoneの場合を考慮
     summary_text_from_response = response.text if response.text is not None else ""
     cleaned_summary = clean_summary_text(summary_text_from_response)
-    
-    now = datetime.now() # 現在のタイムスタンプを取得
+
+    now = datetime.now()  # 現在のタイムスタンプを取得
+    prompt_version = PROMPT_VERSION
 
     new_summary = Summary(
         issue_id=issue_id,
         summary=cleaned_summary,
-        model=MODEL, # app.configからインポートしたMODELを使用
-        create_time=now, # datetimeオブジェクトを渡す
-        update_time=now, # datetimeオブジェクトを渡す
+        model=MODEL,
+        prompt_version=prompt_version,
+        create_time=now,
+        update_time=now,
     )
 
     db.add(new_summary)
     print(f"Staged for commit: Summary with issueID {issue_id}")
+
 
 def get_summaries(issue_id: str, db: Session) -> List[Summary]:
     """
