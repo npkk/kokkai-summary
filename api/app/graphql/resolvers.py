@@ -69,8 +69,8 @@ class Meeting:
                 speaker_role=s.speaker_role,
                 speech=s.speech,
                 start_page=s.start_page,
-                create_time=s.create_time,
-                update_time=s.update_time,
+                create_time=s.create_time.isoformat() if s.create_time else None,
+                update_time=s.update_time.isoformat() if s.update_time else None,
                 speech_url=s.speech_url,
             )
             for s in speeches
@@ -84,8 +84,8 @@ class Meeting:
             return Summary(
                 summary=summary.summary,
                 model=summary.model,
-                create_time=summary.create_time,
-                update_time=summary.update_time,
+                create_time=summary.create_time.isoformat() if summary.create_time else None,
+                update_time=summary.update_time.isoformat() if summary.update_time else None,
             )
         return None
 
@@ -180,8 +180,8 @@ class Query:
                 speaker_role=s.speaker_role,
                 speech=s.speech,
                 start_page=s.start_page,
-                create_time=s.create_time,
-                update_time=s.update_time,
+                create_time=s.create_time.isoformat() if s.create_time else None,
+                update_time=s.update_time.isoformat() if s.update_time else None,
                 speech_url=s.speech_url,
             )
             for s in db_speeches
