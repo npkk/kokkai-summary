@@ -5,7 +5,12 @@ import strawberry
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, and_, distinct
 
-from kokkai_db.schema import Meeting as DBMeeting, Speech as DBSpeech, Session as DBSession, Summary as DBSummary
+from kokkai_db.schema import (
+    Meeting as DBMeeting,
+    Speech as DBSpeech,
+    Session as DBSession,
+    Summary as DBSummary,
+)
 from .dataloaders import DataLoaders
 
 
@@ -15,6 +20,7 @@ class Session:
     name: str
     start_date: date
     end_date: date
+
 
 @strawberry.type
 class Speech:
@@ -31,12 +37,15 @@ class Speech:
     update_time: Optional[str]
     speech_url: str
 
+
 @strawberry.type
 class Summary:
     summary: Optional[str]
     model: Optional[str]
+    prompt_version: Optional[int]
     create_time: Optional[str]
     update_time: Optional[str]
+
 
 @strawberry.type
 class Meeting:
@@ -79,20 +88,29 @@ class Meeting:
     @strawberry.field
     async def summary(self, info) -> Optional[Summary]:
         dataloaders: DataLoaders = info.context["dataloaders"]
-        summary: Optional[DBSummary] = await dataloaders.latest_summaries_by_issue_id.load(self.issue_id)
+        summary: Optional[
+            DBSummary
+        ] = await dataloaders.latest_summaries_by_issue_id.load(self.issue_id)
         if summary:
             return Summary(
                 summary=summary.summary,
                 model=summary.model,
-                create_time=summary.create_time.isoformat() if summary.create_time else None,
-                update_time=summary.update_time.isoformat() if summary.update_time else None,
+                create_time=summary.create_time.isoformat()
+                if summary.create_time
+                else None,
+                prompt_version=summary.prompt_version,
+                update_time=summary.update_time.isoformat()
+                if summary.update_time
+                else None,
             )
         return None
 
     @strawberry.field
     async def session_info(self, info) -> Optional[Session]:
         dataloaders: DataLoaders = info.context["dataloaders"]
-        session_info: Optional[DBSession] = await dataloaders.sessions_by_session_number.load(self.session)
+        session_info: Optional[
+            DBSession
+        ] = await dataloaders.sessions_by_session_number.load(self.session)
         if session_info:
             return Session(
                 session=session_info.session,
