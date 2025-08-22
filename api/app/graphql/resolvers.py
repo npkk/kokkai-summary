@@ -159,6 +159,8 @@ class Query:
         query = select(DBMeeting)
         if has_summary:
             query = query.join(DBSummary, DBMeeting.issue_id == DBSummary.issue_id)
+            # 218, 議院運営委員会で2件ダブるバグが起きたのでパッチ。もしかすると根本的に何かしくじってるかも
+            query = query.distinct(DBMeeting.issue_id)
 
         db_meetings = (
             (await db_session.execute(query.where(and_(*conditions)))).scalars().all()
