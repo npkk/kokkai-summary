@@ -15,7 +15,3 @@ dependencies = [
 
 [tool.uv.sources]
 kokkai-db = { path = "../db" }
-
-[tool.pyright]
-include = ["app", "main.py"]
-exclude = ["**/__pycache__"]
