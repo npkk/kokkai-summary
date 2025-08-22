@@ -63,6 +63,10 @@ class Meeting:
 
     @strawberry.field
     async def speeches(self, info, speech_id: Optional[str] = None) -> List[Speech]:
+        """
+        Meetingに紐づくSpeechを取得する
+        現在呼び出していない
+        """
         dataloaders: DataLoaders = info.context["dataloaders"]
         speeches = await dataloaders.speeches_by_issue_id.load(self.issue_id)
         if speech_id:
@@ -107,6 +111,10 @@ class Meeting:
 
     @strawberry.field
     async def session_info(self, info) -> Optional[Session]:
+        """
+        Meetingに紐づくSessionを取得する
+        現在呼び出していない
+        """
         dataloaders: DataLoaders = info.context["dataloaders"]
         session_info: Optional[
             DBSession
