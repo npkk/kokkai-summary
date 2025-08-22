@@ -163,7 +163,13 @@ class Query:
             query = query.distinct(DBMeeting.issue_id)
 
         db_meetings = (
-            (await db_session.execute(query.where(and_(*conditions)))).scalars().all()
+            (
+                await db_session.execute(
+                    query.where(and_(*conditions)).order_by(DBMeeting.issue_id)
+                )
+            )
+            .scalars()
+            .all()
         )
         return [
             Meeting(

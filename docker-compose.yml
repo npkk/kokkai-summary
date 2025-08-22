@@ -14,7 +14,6 @@ services:
       - postgres_user
       - postgres_password
       - postgres_db
-
   api:
     build:
       context: .
@@ -42,7 +41,6 @@ services:
             - Dockerfile
         - action: rebuild
           path: api/Dockerfile
-
   summary:
     build:
       context: .
@@ -79,6 +77,7 @@ services:
     build:
       context: web
       dockerfile: Dockerfile
+      target: main
     ports:
       - "3000:3000"
     depends_on:
@@ -86,8 +85,21 @@ services:
     restart: unless-stopped
     develop:
       watch:
-        - path: web
-          action: rebuild
+        - action: sync
+          path: web
+          target: /app
+          ignore:
+            - node_modules/
+            - build/
+        - action: rebuild
+          path: web/package.json
+        - action: rebuild
+          path: web/package-lock.json
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000"]
+      retries: 5
+      start_period: 1m
+      interval: 30s
 
 volumes:
   db_data:
