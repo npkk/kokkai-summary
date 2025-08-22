@@ -23,8 +23,9 @@ services:
       - "4000:8000"
     secrets:
       - database_url
-    links:
+    depends_on:
       - db
+    restart: unless-stopped
     develop:
       watch:
         - action: sync
@@ -49,21 +50,19 @@ services:
     secrets:
       - database_url
       - gemini_api_key
-    links:
-      - db
     depends_on:
       - db
     restart: on-failure
     develop:
       watch:
-        - action: sync
+        - action: sync+restart
           path: summary
           target: /app/summary
           ignore:
             - __pycache__
             - Dockerfile
             - cronjob
-        - action: sync
+        - action: sync+restart
           path: db
           target: /app/db
           ignore:
@@ -76,6 +75,19 @@ services:
             command: cron -f
         - action: rebuild
           path: summary/Dockerfile
+  web:
+    build:
+      context: web
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    depends_on:
+      - api
+    restart: unless-stopped
+    develop:
+      watch:
+        - path: web
+          action: rebuild
 
 volumes:
   db_data:
