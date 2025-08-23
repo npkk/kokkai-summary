@@ -3,9 +3,14 @@ from datetime import date
 
 import strawberry
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, and_
+from sqlalchemy import select, and_, distinct
 
-from kokkai_db.schema import Meeting as DBMeeting, Speech as DBSpeech, Session as DBSession, Summary as DBSummary
+from kokkai_db.schema import (
+    Meeting as DBMeeting,
+    Speech as DBSpeech,
+    Session as DBSession,
+    Summary as DBSummary,
+)
 from .dataloaders import DataLoaders
 
 
@@ -15,6 +20,7 @@ class Session:
     name: str
     start_date: date
     end_date: date
+
 
 @strawberry.type
 class Speech:
@@ -31,12 +37,15 @@ class Speech:
     update_time: Optional[str]
     speech_url: str
 
+
 @strawberry.type
 class Summary:
     summary: Optional[str]
     model: Optional[str]
+    prompt_version: Optional[int]
     create_time: Optional[str]
     update_time: Optional[str]
+
 
 @strawberry.type
 class Meeting:
@@ -54,6 +63,10 @@ class Meeting:
 
     @strawberry.field
     async def speeches(self, info, speech_id: Optional[str] = None) -> List[Speech]:
+        """
+        Meetingに紐づくSpeechを取得する
+        現在呼び出していない
+        """
         dataloaders: DataLoaders = info.context["dataloaders"]
         speeches = await dataloaders.speeches_by_issue_id.load(self.issue_id)
         if speech_id:
@@ -69,8 +82,8 @@ class Meeting:
                 speaker_role=s.speaker_role,
                 speech=s.speech,
                 start_page=s.start_page,
-                create_time=s.create_time,
-                update_time=s.update_time,
+                create_time=s.create_time.isoformat() if s.create_time else None,
+                update_time=s.update_time.isoformat() if s.update_time else None,
                 speech_url=s.speech_url,
             )
             for s in speeches
@@ -79,20 +92,33 @@ class Meeting:
     @strawberry.field
     async def summary(self, info) -> Optional[Summary]:
         dataloaders: DataLoaders = info.context["dataloaders"]
-        summary: Optional[DBSummary] = await dataloaders.latest_summaries_by_issue_id.load(self.issue_id)
+        summary: Optional[
+            DBSummary
+        ] = await dataloaders.latest_summaries_by_issue_id.load(self.issue_id)
         if summary:
             return Summary(
                 summary=summary.summary,
                 model=summary.model,
-                create_time=summary.create_time,
-                update_time=summary.update_time,
+                create_time=summary.create_time.isoformat()
+                if summary.create_time
+                else None,
+                prompt_version=summary.prompt_version,
+                update_time=summary.update_time.isoformat()
+                if summary.update_time
+                else None,
             )
         return None
 
     @strawberry.field
     async def session_info(self, info) -> Optional[Session]:
+        """
+        Meetingに紐づくSessionを取得する
+        現在呼び出していない
+        """
         dataloaders: DataLoaders = info.context["dataloaders"]
-        session_info: Optional[DBSession] = await dataloaders.sessions_by_session_number.load(self.session)
+        session_info: Optional[
+            DBSession
+        ] = await dataloaders.sessions_by_session_number.load(self.session)
         if session_info:
             return Session(
                 session=session_info.session,
@@ -106,14 +132,45 @@ class Meeting:
 @strawberry.type
 class Query:
     @strawberry.field
-    async def meetings(self, info, session: int, issue_id: Optional[str] = None) -> List[Meeting]:
+    async def meetings(
+        self,
+        info,
+        session: Optional[int] = None,
+        issue_id: Optional[str] = None,
+        name_of_house: Optional[str] = None,
+        name_of_meeting: Optional[str] = None,
+        has_summary: Optional[bool] = False,
+    ) -> List[Meeting]:
         db_session: AsyncSession = info.context["session"]
-        
-        conditions = [DBMeeting.session == session]
+
+        if not session and not issue_id:
+            raise ValueError("Either 'session' or 'issue_id' must be provided.")
+
+        conditions = []
+        if session:
+            conditions.append(DBMeeting.session == session)
         if issue_id:
             conditions.append(DBMeeting.issue_id == issue_id)
-            
-        db_meetings = (await db_session.execute(select(DBMeeting).where(and_(*conditions)))).scalars().all()
+        if name_of_house:
+            conditions.append(DBMeeting.name_of_house == name_of_house)
+        if name_of_meeting:
+            conditions.append(DBMeeting.name_of_meeting == name_of_meeting)
+
+        query = select(DBMeeting)
+        if has_summary:
+            query = query.join(DBSummary, DBMeeting.issue_id == DBSummary.issue_id)
+            # 218, 議院運営委員会で2件ダブるバグが起きたのでパッチ。もしかすると根本的に何かしくじってるかも
+            query = query.distinct(DBMeeting.issue_id)
+
+        db_meetings = (
+            (
+                await db_session.execute(
+                    query.where(and_(*conditions)).order_by(DBMeeting.issue_id)
+                )
+            )
+            .scalars()
+            .all()
+        )
         return [
             Meeting(
                 issue_id=m.issue_id,
@@ -135,7 +192,15 @@ class Query:
     async def speeches(self, info, speech_id: Optional[str] = None) -> List[Speech]:
         session: AsyncSession = info.context["session"]
         if speech_id:
-            db_speeches = (await session.execute(select(DBSpeech).where(DBSpeech.speech_id == speech_id))).scalars().all()
+            db_speeches = (
+                (
+                    await session.execute(
+                        select(DBSpeech).where(DBSpeech.speech_id == speech_id)
+                    )
+                )
+                .scalars()
+                .all()
+            )
         else:
             db_speeches = (await session.execute(select(DBSpeech))).scalars().all()
         return [
@@ -149,9 +214,39 @@ class Query:
                 speaker_role=s.speaker_role,
                 speech=s.speech,
                 start_page=s.start_page,
-                create_time=s.create_time,
-                update_time=s.update_time,
+                create_time=s.create_time.isoformat() if s.create_time else None,
+                update_time=s.update_time.isoformat() if s.update_time else None,
                 speech_url=s.speech_url,
             )
             for s in db_speeches
         ]
+
+    @strawberry.field
+    async def sessions(self, info) -> List[Session]:
+        db_session: AsyncSession = info.context["session"]
+        db_sessions = (await db_session.execute(select(DBSession))).scalars().all()
+        return [
+            Session(
+                session=s.session,
+                name=s.name,
+                start_date=s.start_date,
+                end_date=s.end_date,
+            )
+            for s in db_sessions
+        ]
+
+    @strawberry.field
+    async def meeting_names(self, info, session: int) -> List[str]:
+        db_session: AsyncSession = info.context["session"]
+        db_meeting_names = (
+            (
+                await db_session.execute(
+                    select(distinct(DBMeeting.name_of_meeting)).where(
+                        DBMeeting.session == session
+                    )
+                )
+            )
+            .scalars()
+            .all()
+        )
+        return [name for name in db_meeting_names if name]

@@ -14,7 +14,6 @@ services:
       - postgres_user
       - postgres_password
       - postgres_db
-
   api:
     build:
       context: .
@@ -23,8 +22,9 @@ services:
       - "4000:8000"
     secrets:
       - database_url
-    links:
+    depends_on:
       - db
+    restart: unless-stopped
     develop:
       watch:
         - action: sync
@@ -41,7 +41,6 @@ services:
             - Dockerfile
         - action: rebuild
           path: api/Dockerfile
-
   summary:
     build:
       context: .
@@ -49,21 +48,19 @@ services:
     secrets:
       - database_url
       - gemini_api_key
-    links:
-      - db
     depends_on:
       - db
     restart: on-failure
     develop:
       watch:
-        - action: sync
+        - action: sync+restart
           path: summary
           target: /app/summary
           ignore:
             - __pycache__
             - Dockerfile
             - cronjob
-        - action: sync
+        - action: sync+restart
           path: db
           target: /app/db
           ignore:
@@ -76,6 +73,33 @@ services:
             command: cron -f
         - action: rebuild
           path: summary/Dockerfile
+  web:
+    build:
+      context: web
+      dockerfile: Dockerfile
+      target: main
+    ports:
+      - "3000:3000"
+    depends_on:
+      - api
+    restart: unless-stopped
+    develop:
+      watch:
+        - action: sync
+          path: web
+          target: /app
+          ignore:
+            - node_modules/
+            - build/
+        - action: rebuild
+          path: web/package.json
+        - action: rebuild
+          path: web/package-lock.json
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000"]
+      retries: 5
+      start_period: 1m
+      interval: 30s
 
 volumes:
   db_data:

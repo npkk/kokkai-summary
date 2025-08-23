@@ -1,0 +1,36 @@
+include:
+  - docker-compose.yml
+services:
+  web-for-test:
+    build:
+      context: web
+      dockerfile: Dockerfile
+      target: test-env
+    ports:
+      - "3001:3000"
+    depends_on:
+      - api
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000"]
+      retries: 5
+      start_period: 1m
+      interval: 30s
+
+  web-test:
+    image: mcr.microsoft.com/playwright:v1.55.0-noble
+    working_dir: /work
+    volumes:
+      - ./web:/work
+      # for debug
+      - /mnt/wslg:/mnt/wslg
+      - /tmp/.X11-unix:/tmp/.X11-unix
+    environment:
+      # for debug
+      - DISPLAY=:0
+      - WAYLAND_DISPLAY=wayland-0
+      - XDG_RUNTIME_DIR=/mnt/wslg/runtime-dir
+      - WEB_BASE_URL=http://web-for-test:3000
+    depends_on:
+      web-for-test:
+        condition: service_healthy

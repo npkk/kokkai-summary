@@ -74,6 +74,7 @@ class Summary(Base):
     )
     summary: Mapped[str | None] = mapped_column(Text)
     model: Mapped[str | None] = mapped_column(String, primary_key=True)
+    prompt_version: Mapped[int] = mapped_column(Integer, primary_key=True, default=1)
     create_time: Mapped[datetime] = mapped_column(DateTime, nullable=False)
     update_time: Mapped[datetime] = mapped_column(DateTime, nullable=False)
 
