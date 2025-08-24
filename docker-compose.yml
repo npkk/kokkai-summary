@@ -8,6 +8,8 @@ services:
     restart: always
     ports:
       - "5432:5432"
+    networks:
+      - kokkai-summary
     volumes:
       - db_data:/var/lib/postgresql/data
     secrets:
@@ -15,11 +17,15 @@ services:
       - postgres_password
       - postgres_db
   api:
+    container_name: kokkai-summary-api
     build:
       context: .
       dockerfile: api/Dockerfile
     ports:
       - "4000:8000"
+    networks:
+      - sigsegvvv-xyz
+      - kokkai-summary
     secrets:
       - database_url
     depends_on:
@@ -45,6 +51,8 @@ services:
     build:
       context: .
       dockerfile: summary/Dockerfile
+    networks:
+      - kokkai-summary
     secrets:
       - database_url
       - gemini_api_key
@@ -74,12 +82,15 @@ services:
         - action: rebuild
           path: summary/Dockerfile
   web:
+    container_name: kokkai-summary-web
     build:
       context: web
       dockerfile: Dockerfile
       target: main
     ports:
-      - "3000:3000"
+      - "3002:3000"
+    networks:
+      - sigsegvvv-xyz
     depends_on:
       - api
     restart: unless-stopped
@@ -104,14 +115,17 @@ services:
 volumes:
   db_data:
 
+networks:
+  kokkai-summary:
+
 secrets:
   database_url:
-    file: ./secrets/database_url
+    file: ${SECRETS_PATH}/database_url
   gemini_api_key:
-    file: ./secrets/gemini_api_key
+    file: ${SECRETS_PATH}/gemini_api_key
   postgres_user:
-    file: ./secrets/postgres_user
+    file: ${SECRETS_PATH}/postgres_user
   postgres_password:
-    file: ./secrets/postgres_password
+    file: ${SECRETS_PATH}/postgres_password
   postgres_db:
-    file: ./secrets/postgres_db
+    file: ${SECRETS_PATH}/postgres_db
