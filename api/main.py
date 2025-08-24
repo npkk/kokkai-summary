@@ -43,23 +43,23 @@ async def get_context(request: Request) -> dict:
 
 
 schema = strawberry.Schema(query=Query)
-graphql_app = GraphQLRouter(schema, context_getter=get_context)
+graphql_app = GraphQLRouter(schema, context_getter=get_context, graphql_ide=None)
 
 app = FastAPI()
+
+allow_origins = [
+    "https://kokkai-summary.sigsegvvv.xyz",
+    "http://localhost:3002"
+]
 
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=allow_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-
-@app.get("/")
-async def root():
-    return {"message": "Hello World"}
 
 
 app.include_router(graphql_app, prefix="/graphql")
