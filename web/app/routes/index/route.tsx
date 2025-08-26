@@ -55,8 +55,11 @@ const SEARCH_MEETINGS_QUERY = `
 
 export function meta() {
 	return [
-		{ title: "国会会議録検索" },
-		{ name: "description", content: "国会会議録の検索" },
+		{ title: "国会会議録要約システム(仮)" },
+		{
+			name: "description",
+			content: "国会の会議録を要約しているシステムです。",
+		},
 	];
 }
 
@@ -141,7 +144,7 @@ export default function SearchPage() {
 
 	return (
 		<div className="p-4">
-			<h1 className="text-2xl font-bold mb-4">国会会議録検索</h1>
+			<h1 className="text-2xl font-bold mb-4">国会会議録要約システム(仮)</h1>
 
 			{/* Session Dropdown */}
 			<SessionDropdown
@@ -196,7 +199,7 @@ export default function SearchPage() {
 							type="checkbox"
 							checked={hasSummary}
 							onChange={(e) => setHasSummary(e.target.checked)}
-						/>{" "}
+						/>
 						要約済みでない会議を含める
 					</label>
 				</div>
