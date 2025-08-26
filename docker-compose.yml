@@ -1,5 +1,6 @@
 services:
   db:
+    container_name: kokkai-summary-db
     image: postgres:latest
     environment:
       POSTGRES_USER_FILE: /run/secrets/postgres_user
@@ -48,6 +49,7 @@ services:
         - action: rebuild
           path: api/Dockerfile
   summary:
+    container_name: kokkai-summary-summary
     build:
       context: .
       dockerfile: summary/Dockerfile
@@ -117,15 +119,21 @@ volumes:
 
 networks:
   kokkai-summary:
+  sigsegvvv-xyz:
 
 secrets:
   database_url:
+    name: database_url
     file: ${SECRETS_PATH}/database_url
   gemini_api_key:
+    name: gemini_api_key
     file: ${SECRETS_PATH}/gemini_api_key
   postgres_user:
+    name: postgres_user
     file: ${SECRETS_PATH}/postgres_user
   postgres_password:
+    name: postgres_password
     file: ${SECRETS_PATH}/postgres_password
   postgres_db:
+    name: postgres_db
     file: ${SECRETS_PATH}/postgres_db
