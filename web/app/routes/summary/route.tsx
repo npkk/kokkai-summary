@@ -1,4 +1,4 @@
-import { useParams, Link } from "react-router";
+import { useParams, useNavigate } from "react-router";
 import ReactMarkdown from "react-markdown";
 import {
 	H1,
@@ -13,8 +13,9 @@ import {
 	H3,
 	Hr,
 } from "~/components/markdown";
-import { useState, useEffect } from "react"; // 追加
-import { graphqlRequest } from "~/lib/api"; // 追加
+import { useState, useEffect, useContext } from "react";
+import { graphqlRequest } from "~/lib/api";
+import { SearchContext } from "~/lib/context";
 
 // Define types for our data based on the API schema
 interface Meeting {
@@ -53,6 +54,8 @@ export default function SummaryPage() {
 	const [meeting, setMeeting] = useState<Meeting | null>(null);
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState<string | null>(null);
+	const navigate = useNavigate();
+	const searchContext = useContext(SearchContext);
 
 	useEffect(() => {
 		const fetchMeetingDetails = async () => {
@@ -97,14 +100,49 @@ export default function SummaryPage() {
 		return <div className="p-4">Meeting not found.</div>;
 	}
 
+	const handleBreadcrumbClick = (
+		type: "session" | "nameOfMeeting" | "nameOfHouse",
+	) => {
+		if (!searchContext || !meeting) return;
+		const { setSearchCriteria } = searchContext;
+		setSearchCriteria({
+			session: type === "session" ? meeting.session : null,
+			nameOfMeeting:
+				type === "nameOfMeeting" ? meeting.nameOfMeeting : null,
+			nameOfHouse: type === "nameOfHouse" ? [meeting.nameOfHouse] : [],
+		});
+		navigate("/");
+	};
+
 	return (
 		<div className="p-4">
-			<Link
-				to="/"
-				className="text-blue-600 hover:underline mb-4 block dark:text-blue-400"
-			>
-				&larr; Back to Search
-			</Link>
+			<nav className="flex items-center text-sm text-gray-500 dark:text-gray-400 mb-4">
+				<button
+					type="button"
+					onClick={() => handleBreadcrumbClick("session")}
+					className="hover:underline"
+				>
+					{`第${meeting.session}回`}
+				</button>
+				<span className="mx-2">&gt;</span>
+				<button
+					type="button"
+					onClick={() => handleBreadcrumbClick("nameOfMeeting")}
+					className="hover:underline"
+				>
+					{meeting.nameOfMeeting}
+				</button>
+				<span className="mx-2">&gt;</span>
+				<button
+					type="button"
+					onClick={() => handleBreadcrumbClick("nameOfHouse")}
+					className="hover:underline"
+				>
+					{meeting.nameOfHouse}
+				</button>
+				<span className="mx-2">&gt;</span>
+				<span>{meeting.issue}</span>
+			</nav>
 			<h1 className="text-3xl font-bold">{meeting.nameOfMeeting}</h1>
 			<p className="text-lg text-gray-700 dark:text-gray-300">
 				{meeting.issue}

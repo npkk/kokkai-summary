@@ -1,8 +1,9 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useContext, useCallback } from "react";
 import { useNavigate } from "react-router";
 import { MeetingNameDropdown, SessionDropdown } from "~/components/pulldown";
 import { graphqlRequest } from "~/lib/api";
 import type { Session } from "~/components/pulldown";
+import { SearchContext } from "~/lib/context";
 
 // Define types for our data based on the API schema
 interface Meeting {
@@ -69,7 +70,7 @@ export default function SearchPage() {
 		null,
 	);
 	const [selectedHouses, setSelectedHouses] = useState<string[]>([]);
-	const [hasSummary, setHasSummary] = useState(false);
+	const [includeNoSummary, setIncludeNoSummary] = useState(false);
 
 	const [sessions, setSessions] = useState<Session[]>([]);
 	const [meetingNames, setMeetingNames] = useState<string[]>([]);
@@ -77,6 +78,7 @@ export default function SearchPage() {
 	const [loading, setLoading] = useState(false);
 
 	const navigate = useNavigate();
+	const searchContext = useContext(SearchContext);
 
 	// Fetch sessions
 	useEffect(() => {
@@ -115,26 +117,53 @@ export default function SearchPage() {
 		fetchMeetingNames();
 	}, [selectedSession]);
 
-	const handleSearch = async () => {
-		if (!selectedSession) return;
-		setLoading(true);
-		try {
-			const data = await graphqlRequest<{ meetings: Meeting[] }>(
-				SEARCH_MEETINGS_QUERY,
-				{
-					session: selectedSession,
-					nameOfMeeting: selectedMeetingName,
-					nameOfHouse: selectedHouses.length === 1 ? selectedHouses[0] : null,
-					hasSummary: !hasSummary,
-				},
-			);
-			setMeetings(data.meetings);
-		} catch (error) {
-			console.error("Error searching meetings:", error);
-		} finally {
-			setLoading(false);
+	const handleSearch = useCallback(
+		async (
+			session: number | null,
+			meetingName: string | null,
+			houses: string[],
+			includeNoSummary: boolean = false,
+		) => {
+			if (!session) return;
+			setLoading(true);
+			try {
+				const data = await graphqlRequest<{ meetings: Meeting[] }>(
+					SEARCH_MEETINGS_QUERY,
+					{
+						session: session,
+						nameOfMeeting: meetingName,
+						nameOfHouse: houses.length === 1 ? houses[0] : null,
+						hasSummary: !includeNoSummary,
+					},
+				);
+				setMeetings(data.meetings);
+			} catch (error) {
+				console.error("Error searching meetings:", error);
+			} finally {
+				setLoading(false);
+			}
+		},
+		[],
+	);
+
+	// Contextから検索条件を読み込んで検索を実行
+	useEffect(() => {
+		if (searchContext?.searchCriteria) {
+			const { session, nameOfMeeting, nameOfHouse } =
+				searchContext.searchCriteria;
+			if (session) {
+				setSelectedSession(session);
+			}
+			if (nameOfMeeting) {
+				setSelectedMeetingName(nameOfMeeting);
+			}
+			if (nameOfHouse) {
+				setSelectedHouses(nameOfHouse);
+			}
+			handleSearch(session, nameOfMeeting, nameOfHouse);
+			searchContext.setSearchCriteria(null);
 		}
-	};
+	}, [searchContext, handleSearch]);
 
 	const handleHouseChange = (house: string) => {
 		setSelectedHouses((prev) =>
@@ -197,8 +226,8 @@ export default function SearchPage() {
 					<label>
 						<input
 							type="checkbox"
-							checked={hasSummary}
-							onChange={(e) => setHasSummary(e.target.checked)}
+							checked={includeNoSummary}
+							onChange={(e) => setIncludeNoSummary(e.target.checked)}
 						/>
 						要約済みでない会議を含める
 					</label>
@@ -208,7 +237,14 @@ export default function SearchPage() {
 			{/* Search Button */}
 			<button
 				type="button"
-				onClick={handleSearch}
+				onClick={() =>
+					handleSearch(
+						selectedSession,
+						selectedMeetingName,
+						selectedHouses,
+						includeNoSummary,
+					)
+				}
 				disabled={loading || !selectedSession}
 				className="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700 disabled:bg-gray-400"
 			>
