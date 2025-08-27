@@ -6,7 +6,7 @@ test.describe('Meeting Search E2E Tests', () => {
     await page.waitForLoadState('networkidle');
 
     // 検索画面が表示されていることを確認
-    await expect(page.locator('h1', { hasText: '国会会議録検索' })).toBeVisible();
+    await expect(page.getByRole('link', { name: '国会会議録要約システム(仮)' })).toBeVisible();
   });
 
   test('Test Case 1: Filter by Session, Meeting Name, and House', async ({ page }) => {

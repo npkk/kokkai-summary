@@ -120,6 +120,8 @@ volumes:
 networks:
   kokkai-summary:
   sigsegvvv-xyz:
+    name: sigsegvvv-xyz
+    external: true
 
 secrets:
   database_url:
