@@ -1,5 +1,5 @@
-import ReactMarkdown from "react-markdown";
 import type React from "react";
+import ReactMarkdown from "react-markdown";
 
 const A: React.FC<React.AnchorHTMLAttributes<HTMLAnchorElement>> = ({
 	children,
@@ -98,27 +98,27 @@ const Ul: React.FC<React.HTMLAttributes<HTMLUListElement>> = ({
 };
 
 interface StyledMarkdownProps {
-  children: string;
+	children: string;
 }
 
 export const StyledMarkdown: React.FC<StyledMarkdownProps> = ({ children }) => {
-  return (
-    <ReactMarkdown
-      components={{
-        h1: H1,
-        h2: H2,
-        h3: H3,
-        hr: Hr,
-        p: P,
-        a: A,
-        ul: Ul,
-        ol: Ol,
-        li: Li,
-        blockquote: Blockquote,
-        code: Code,
-      }}
-    >
-      {children}
-    </ReactMarkdown>
-  );
+	return (
+		<ReactMarkdown
+			components={{
+				h1: H1,
+				h2: H2,
+				h3: H3,
+				hr: Hr,
+				p: P,
+				a: A,
+				ul: Ul,
+				ol: Ol,
+				li: Li,
+				blockquote: Blockquote,
+				code: Code,
+			}}
+		>
+			{children}
+		</ReactMarkdown>
+	);
 };

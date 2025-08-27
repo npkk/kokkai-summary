@@ -1,6 +1,6 @@
-import { useParams, useNavigate } from "react-router";
+import { useContext, useEffect, useState } from "react";
+import { useNavigate, useParams } from "react-router";
 import { StyledMarkdown } from "~/components/markdown/styledMarkdown";
-import { useState, useEffect, useContext } from "react";
 import { graphqlRequest } from "~/lib/api";
 import { SearchContext } from "~/lib/context";
 
