@@ -1,18 +1,5 @@
 import { useParams, useNavigate } from "react-router";
-import ReactMarkdown from "react-markdown";
-import {
-	H1,
-	H2,
-	P,
-	A,
-	Ul,
-	Ol,
-	Li,
-	Blockquote,
-	Code,
-	H3,
-	Hr,
-} from "~/components/markdown";
+import { StyledMarkdown } from "~/components/markdown/styledMarkdown";
 import { useState, useEffect, useContext } from "react";
 import { graphqlRequest } from "~/lib/api";
 import { SearchContext } from "~/lib/context";
@@ -153,23 +140,7 @@ export default function SummaryPage() {
 
 			<div className="prose lg:prose-xl max-w-none dark:prose-invert">
 				{meeting.summary ? (
-					<ReactMarkdown
-						components={{
-							h1: H1,
-							h2: H2,
-							h3: H3,
-							hr: Hr,
-							p: P,
-							a: A,
-							ul: Ul,
-							ol: Ol,
-							li: Li,
-							blockquote: Blockquote,
-							code: Code,
-						}}
-					>
-						{meeting.summary.summary}
-					</ReactMarkdown>
+					<StyledMarkdown>{meeting.summary.summary}</StyledMarkdown>
 				) : (
 					<p>No summary available for this meeting.</p>
 				)}
