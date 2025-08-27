@@ -28,6 +28,7 @@ export const SessionDropdown: React.FC<SessionDropdownProps> = ({
 				onChange={(e) => onSessionChange(Number(e.target.value))}
 				className="border rounded p-2 bg-white dark:bg-gray-700 dark:text-gray-100"
 			>
+				<option value="">--- 回次を選択してください ---</option>
 				{sessions.map((s) => (
 					<option key={s.session} value={s.session}>
 						{s.name}

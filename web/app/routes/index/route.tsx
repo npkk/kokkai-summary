@@ -1,7 +1,7 @@
 import { useCallback, useContext, useEffect, useState } from "react";
 import { useNavigate } from "react-router";
-import type { Session } from "~/components/pulldown";
-import { MeetingNameDropdown, SessionDropdown } from "~/components/pulldown";
+import type { Session } from "~/routes/index/pulldown";
+import { MeetingNameDropdown, SessionDropdown } from "~/routes/index/pulldown";
 import { graphqlRequest } from "~/lib/api";
 import { SearchContext } from "~/lib/context";
 
@@ -171,8 +171,6 @@ export default function SearchPage() {
 
 	return (
 		<div className="p-4">
-			<h1 className="text-2xl font-bold mb-4">国会会議録要約システム(仮)</h1>
-
 			{/* Session Dropdown */}
 			<SessionDropdown
 				sessions={sessions}

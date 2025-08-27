@@ -9,6 +9,7 @@ import {
 
 import type { Route } from "./+types/root";
 import "./app.css";
+import { Header } from "./components/layout/header";
 import { SearchProvider } from "./lib/context";
 
 export const links: Route.LinksFunction = () => [
@@ -38,9 +39,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
 				<Links />
 			</head>
 			<body>
-				<header className="max-w-[60rem] w-full mx-auto pt-4 pb-4 pl-4">
-					<a href="https://sigsegvvv.xyz">きつねの隠れ家</a>
-				</header>
+				<Header />
 				<SearchProvider>{children}</SearchProvider>
 				<ScrollRestoration />
 				<Scripts />
@@ -52,8 +51,8 @@ export function Layout({ children }: { children: React.ReactNode }) {
 export default function App() {
 	return (
 		<div>
-			<div className="flex items-center max-w-[60rem] w-full mx-auto">
-				<div className="flex-1 flex flex-col w-full content-center 2xl:w-2xl">
+			<div className="flex items-center max-w-[60rem] xl:max-w-7xl w-full mx-auto">
+				<div className="flex-1 flex flex-col w-full content-center">
 					<Outlet />
 				</div>
 			</div>
