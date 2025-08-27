@@ -1,8 +1,9 @@
-import { useEffect, useState } from "react";
+import { useCallback, useContext, useEffect, useState } from "react";
 import { useNavigate } from "react-router";
-import { MeetingNameDropdown, SessionDropdown } from "~/components/pulldown";
+import type { Session } from "~/routes/index/pulldown";
+import { MeetingNameDropdown, SessionDropdown } from "~/routes/index/pulldown";
 import { graphqlRequest } from "~/lib/api";
-import type { Session } from "~/components/pulldown";
+import { SearchContext } from "~/lib/context";
 
 // Define types for our data based on the API schema
 interface Meeting {
@@ -55,8 +56,11 @@ const SEARCH_MEETINGS_QUERY = `
 
 export function meta() {
 	return [
-		{ title: "国会会議録検索" },
-		{ name: "description", content: "国会会議録の検索" },
+		{ title: "国会会議録要約システム(仮)" },
+		{
+			name: "description",
+			content: "国会の会議録を要約しているシステムです。",
+		},
 	];
 }
 
@@ -66,7 +70,7 @@ export default function SearchPage() {
 		null,
 	);
 	const [selectedHouses, setSelectedHouses] = useState<string[]>([]);
-	const [hasSummary, setHasSummary] = useState(false);
+	const [includeNoSummary, setIncludeNoSummary] = useState(false);
 
 	const [sessions, setSessions] = useState<Session[]>([]);
 	const [meetingNames, setMeetingNames] = useState<string[]>([]);
@@ -74,64 +78,59 @@ export default function SearchPage() {
 	const [loading, setLoading] = useState(false);
 
 	const navigate = useNavigate();
+	const searchContext = useContext(SearchContext);
 
-	// Fetch sessions
-	useEffect(() => {
-		const fetchSessions = async () => {
-			try {
-				const data = await graphqlRequest<{ sessions: Session[] }>(
-					GET_SESSIONS_QUERY,
-				);
-				setSessions(data.sessions);
-				if (data.sessions.length > 0) {
-					setSelectedSession(data.sessions[0].session);
-				}
-			} catch (error) {
-				console.error("Error fetching sessions:", error);
-			}
-		};
-		fetchSessions();
+	const fetchSessions = useCallback(async () => {
+		try {
+			const data = await graphqlRequest<{ sessions: Session[] }>(
+				GET_SESSIONS_QUERY,
+			);
+			setSessions(data.sessions);
+		} catch (error) {
+			console.error("Error fetching sessions:", error);
+		}
 	}, []);
 
-	// Fetch meeting names when selectedSession changes
-	useEffect(() => {
-		const fetchMeetingNames = async () => {
-			if (selectedSession) {
-				try {
-					const data = await graphqlRequest<{ meetingNames: string[] }>(
-						GET_MEETING_NAMES_QUERY,
-						{ session: selectedSession },
-					);
-					setMeetingNames(data.meetingNames);
-					setSelectedMeetingName(null);
-				} catch (error) {
-					console.error("Error fetching meeting names:", error);
-				}
-			}
-		};
-		fetchMeetingNames();
-	}, [selectedSession]);
-
-	const handleSearch = async () => {
-		if (!selectedSession) return;
-		setLoading(true);
+	const fetchMeetingNames = useCallback(async (session: number) => {
 		try {
-			const data = await graphqlRequest<{ meetings: Meeting[] }>(
-				SEARCH_MEETINGS_QUERY,
-				{
-					session: selectedSession,
-					nameOfMeeting: selectedMeetingName,
-					nameOfHouse: selectedHouses.length === 1 ? selectedHouses[0] : null,
-					hasSummary: !hasSummary,
-				},
+			const data = await graphqlRequest<{ meetingNames: string[] }>(
+				GET_MEETING_NAMES_QUERY,
+				{ session: session },
 			);
-			setMeetings(data.meetings);
+			setMeetingNames(data.meetingNames);
 		} catch (error) {
-			console.error("Error searching meetings:", error);
-		} finally {
-			setLoading(false);
+			console.error("Error fetching meeting names:", error);
 		}
-	};
+	}, []);
+
+	const handleSearch = useCallback(
+		async (
+			session: number | null,
+			meetingName: string | null,
+			houses: string[],
+			includeNoSummary: boolean = false,
+		) => {
+			if (!session) return;
+			setLoading(true);
+			try {
+				const data = await graphqlRequest<{ meetings: Meeting[] }>(
+					SEARCH_MEETINGS_QUERY,
+					{
+						session: session,
+						nameOfMeeting: meetingName,
+						nameOfHouse: houses.length === 1 ? houses[0] : null,
+						hasSummary: !includeNoSummary,
+					},
+				);
+				setMeetings(data.meetings);
+			} catch (error) {
+				console.error("Error searching meetings:", error);
+			} finally {
+				setLoading(false);
+			}
+		},
+		[],
+	);
 
 	const handleHouseChange = (house: string) => {
 		setSelectedHouses((prev) =>
@@ -139,10 +138,39 @@ export default function SearchPage() {
 		);
 	};
 
+	// Fetch sessions
+	useEffect(() => {
+		fetchSessions();
+	}, [fetchSessions]);
+
+	// Fetch meeting names when selectedSession changes
+	useEffect(() => {
+		if (selectedSession) {
+			fetchMeetingNames(selectedSession);
+		}
+	}, [selectedSession, fetchMeetingNames]);
+
+	// Contextから検索条件を読み込んで検索を実行
+	useEffect(() => {
+		if (searchContext?.searchCriteria) {
+			const { session, nameOfMeeting, nameOfHouse } =
+				searchContext.searchCriteria;
+			if (session) {
+				setSelectedSession(session);
+			}
+			if (session && nameOfMeeting) {
+				setSelectedMeetingName(nameOfMeeting);
+			}
+			if (nameOfHouse) {
+				setSelectedHouses(nameOfHouse);
+			}
+			handleSearch(session, nameOfMeeting, nameOfHouse);
+			searchContext.setSearchCriteria(null);
+		}
+	}, [searchContext, handleSearch]);
+
 	return (
 		<div className="p-4">
-			<h1 className="text-2xl font-bold mb-4">国会会議録検索</h1>
-
 			{/* Session Dropdown */}
 			<SessionDropdown
 				sessions={sessions}
@@ -151,14 +179,13 @@ export default function SearchPage() {
 			/>
 
 			{/* Meeting Name Dropdown */}
-			{selectedSession && (
-				<MeetingNameDropdown
-					meetingNames={meetingNames}
-					selectedMeetingName={selectedMeetingName}
-					onMeetingNameChange={setSelectedMeetingName}
-					disabled={!selectedSession}
-				/>
-			)}
+
+			<MeetingNameDropdown
+				meetingNames={meetingNames}
+				selectedMeetingName={selectedMeetingName}
+				onMeetingNameChange={setSelectedMeetingName}
+				disabled={!selectedSession}
+			/>
 
 			{/* Filters */}
 			<div className="flex items-center gap-4 mb-4">
@@ -194,9 +221,9 @@ export default function SearchPage() {
 					<label>
 						<input
 							type="checkbox"
-							checked={hasSummary}
-							onChange={(e) => setHasSummary(e.target.checked)}
-						/>{" "}
+							checked={includeNoSummary}
+							onChange={(e) => setIncludeNoSummary(e.target.checked)}
+						/>
 						要約済みでない会議を含める
 					</label>
 				</div>
@@ -205,8 +232,15 @@ export default function SearchPage() {
 			{/* Search Button */}
 			<button
 				type="button"
-				onClick={handleSearch}
-				disabled={loading || !selectedSession}
+				onClick={() =>
+					handleSearch(
+						selectedSession,
+						selectedMeetingName,
+						selectedHouses,
+						includeNoSummary,
+					)
+				}
+				disabled={loading || !selectedSession || !selectedMeetingName}
 				className="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700 disabled:bg-gray-400"
 			>
 				{loading ? "検索中..." : "検索"}

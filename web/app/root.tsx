@@ -9,6 +9,8 @@ import {
 
 import type { Route } from "./+types/root";
 import "./app.css";
+import { Header } from "./components/layout/header";
+import { SearchProvider } from "./lib/context";
 
 export const links: Route.LinksFunction = () => [
 	{ rel: "preconnect", href: "https://fonts.googleapis.com" },
@@ -37,7 +39,8 @@ export function Layout({ children }: { children: React.ReactNode }) {
 				<Links />
 			</head>
 			<body>
-				{children}
+				<Header />
+				<SearchProvider>{children}</SearchProvider>
 				<ScrollRestoration />
 				<Scripts />
 			</body>
@@ -46,7 +49,15 @@ export function Layout({ children }: { children: React.ReactNode }) {
 }
 
 export default function App() {
-	return <Outlet />;
+	return (
+		<div>
+			<div className="flex items-center max-w-[60rem] xl:max-w-7xl w-full mx-auto">
+				<div className="flex-1 flex flex-col w-full content-center">
+					<Outlet />
+				</div>
+			</div>
+		</div>
+	);
 }
 
 export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
