@@ -80,42 +80,28 @@ export default function SearchPage() {
 	const navigate = useNavigate();
 	const searchContext = useContext(SearchContext);
 
-	// Fetch sessions
-	useEffect(() => {
-		const fetchSessions = async () => {
-			try {
-				const data = await graphqlRequest<{ sessions: Session[] }>(
-					GET_SESSIONS_QUERY,
-				);
-				setSessions(data.sessions);
-				if (data.sessions.length > 0) {
-					setSelectedSession(data.sessions[0].session);
-				}
-			} catch (error) {
-				console.error("Error fetching sessions:", error);
-			}
-		};
-		fetchSessions();
+	const fetchSessions = useCallback(async () => {
+		try {
+			const data = await graphqlRequest<{ sessions: Session[] }>(
+				GET_SESSIONS_QUERY,
+			);
+			setSessions(data.sessions);
+		} catch (error) {
+			console.error("Error fetching sessions:", error);
+		}
 	}, []);
 
-	// Fetch meeting names when selectedSession changes
-	useEffect(() => {
-		const fetchMeetingNames = async () => {
-			if (selectedSession) {
-				try {
-					const data = await graphqlRequest<{ meetingNames: string[] }>(
-						GET_MEETING_NAMES_QUERY,
-						{ session: selectedSession },
-					);
-					setMeetingNames(data.meetingNames);
-					setSelectedMeetingName(null);
-				} catch (error) {
-					console.error("Error fetching meeting names:", error);
-				}
-			}
-		};
-		fetchMeetingNames();
-	}, [selectedSession]);
+	const fetchMeetingNames = useCallback(async (session: number) => {
+		try {
+			const data = await graphqlRequest<{ meetingNames: string[] }>(
+				GET_MEETING_NAMES_QUERY,
+				{ session: session },
+			);
+			setMeetingNames(data.meetingNames);
+		} catch (error) {
+			console.error("Error fetching meeting names:", error);
+		}
+	}, []);
 
 	const handleSearch = useCallback(
 		async (
@@ -146,6 +132,24 @@ export default function SearchPage() {
 		[],
 	);
 
+	const handleHouseChange = (house: string) => {
+		setSelectedHouses((prev) =>
+			prev.includes(house) ? prev.filter((h) => h !== house) : [...prev, house],
+		);
+	};
+
+	// Fetch sessions
+	useEffect(() => {
+		fetchSessions();
+	}, [fetchSessions]);
+
+	// Fetch meeting names when selectedSession changes
+	useEffect(() => {
+		if (selectedSession) {
+			fetchMeetingNames(selectedSession);
+		}
+	}, [selectedSession, fetchMeetingNames]);
+
 	// Contextから検索条件を読み込んで検索を実行
 	useEffect(() => {
 		if (searchContext?.searchCriteria) {
@@ -154,7 +158,7 @@ export default function SearchPage() {
 			if (session) {
 				setSelectedSession(session);
 			}
-			if (nameOfMeeting) {
+			if (session && nameOfMeeting) {
 				setSelectedMeetingName(nameOfMeeting);
 			}
 			if (nameOfHouse) {
@@ -164,12 +168,6 @@ export default function SearchPage() {
 			searchContext.setSearchCriteria(null);
 		}
 	}, [searchContext, handleSearch]);
-
-	const handleHouseChange = (house: string) => {
-		setSelectedHouses((prev) =>
-			prev.includes(house) ? prev.filter((h) => h !== house) : [...prev, house],
-		);
-	};
 
 	return (
 		<div className="p-4">
@@ -245,7 +243,7 @@ export default function SearchPage() {
 						includeNoSummary,
 					)
 				}
-				disabled={loading || !selectedSession}
+				disabled={loading || !selectedSession || !selectedMeetingName}
 				className="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700 disabled:bg-gray-400"
 			>
 				{loading ? "検索中..." : "検索"}

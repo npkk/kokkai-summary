@@ -88,15 +88,16 @@ export default function SummaryPage() {
 	}
 
 	const handleBreadcrumbClick = (
-		type: "session" | "nameOfMeeting" | "nameOfHouse",
+		session: number,
+		nameOfMeeting: string | null,
+		nameOfHouse: string | null,
 	) => {
 		if (!searchContext || !meeting) return;
 		const { setSearchCriteria } = searchContext;
 		setSearchCriteria({
-			session: type === "session" ? meeting.session : null,
-			nameOfMeeting:
-				type === "nameOfMeeting" ? meeting.nameOfMeeting : null,
-			nameOfHouse: type === "nameOfHouse" ? [meeting.nameOfHouse] : [],
+			session: session,
+			nameOfMeeting: nameOfMeeting,
+			nameOfHouse: nameOfHouse ? [nameOfHouse] : [],
 		});
 		navigate("/");
 	};
@@ -106,7 +107,7 @@ export default function SummaryPage() {
 			<nav className="flex items-center text-sm text-gray-500 dark:text-gray-400 mb-4">
 				<button
 					type="button"
-					onClick={() => handleBreadcrumbClick("session")}
+					onClick={() => handleBreadcrumbClick(meeting.session, null, null)}
 					className="hover:underline"
 				>
 					{`第${meeting.session}回`}
@@ -114,7 +115,9 @@ export default function SummaryPage() {
 				<span className="mx-2">&gt;</span>
 				<button
 					type="button"
-					onClick={() => handleBreadcrumbClick("nameOfMeeting")}
+					onClick={() =>
+						handleBreadcrumbClick(meeting.session, meeting.nameOfMeeting, null)
+					}
 					className="hover:underline"
 				>
 					{meeting.nameOfMeeting}
@@ -122,7 +125,13 @@ export default function SummaryPage() {
 				<span className="mx-2">&gt;</span>
 				<button
 					type="button"
-					onClick={() => handleBreadcrumbClick("nameOfHouse")}
+					onClick={() =>
+						handleBreadcrumbClick(
+							meeting.session,
+							meeting.nameOfMeeting,
+							meeting.nameOfHouse,
+						)
+					}
 					className="hover:underline"
 				>
 					{meeting.nameOfHouse}
