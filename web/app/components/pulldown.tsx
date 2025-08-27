@@ -63,7 +63,7 @@ export const MeetingNameDropdown: React.FC<MeetingNameDropdownProps> = ({
 				disabled={disabled}
 				className="border rounded p-2 bg-white dark:bg-gray-700 dark:text-gray-100"
 			>
-				<option value="">全て</option>
+				<option value="">--- 会議名を選択してください ---</option>
 				{meetingNames.map((name) => (
 					<option key={name} value={name}>
 						{name}

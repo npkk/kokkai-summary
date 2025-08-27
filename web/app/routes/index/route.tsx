@@ -1,8 +1,8 @@
-import { useEffect, useState, useContext, useCallback } from "react";
+import { useCallback, useContext, useEffect, useState } from "react";
 import { useNavigate } from "react-router";
+import type { Session } from "~/components/pulldown";
 import { MeetingNameDropdown, SessionDropdown } from "~/components/pulldown";
 import { graphqlRequest } from "~/lib/api";
-import type { Session } from "~/components/pulldown";
 import { SearchContext } from "~/lib/context";
 
 // Define types for our data based on the API schema
@@ -181,14 +181,13 @@ export default function SearchPage() {
 			/>
 
 			{/* Meeting Name Dropdown */}
-			{selectedSession && (
-				<MeetingNameDropdown
-					meetingNames={meetingNames}
-					selectedMeetingName={selectedMeetingName}
-					onMeetingNameChange={setSelectedMeetingName}
-					disabled={!selectedSession}
-				/>
-			)}
+
+			<MeetingNameDropdown
+				meetingNames={meetingNames}
+				selectedMeetingName={selectedMeetingName}
+				onMeetingNameChange={setSelectedMeetingName}
+				disabled={!selectedSession}
+			/>
 
 			{/* Filters */}
 			<div className="flex items-center gap-4 mb-4">
