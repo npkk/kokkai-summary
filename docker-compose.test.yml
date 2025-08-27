@@ -6,10 +6,10 @@ services:
       context: web
       dockerfile: Dockerfile
       target: test-env
-    ports:
-      - "3001:3000"
     depends_on:
       - api
+    networks:
+      - sigsegvvv-xyz
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3000"]
@@ -34,3 +34,10 @@ services:
     depends_on:
       web-for-test:
         condition: service_healthy
+    networks:
+      - sigsegvvv-xyz
+  
+networks:
+  sigsegvvv-xyz:
+    name: sigsegvvv-xyz
+    external: true
