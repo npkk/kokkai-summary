@@ -15,44 +15,21 @@ async def run_summary_job():
     print(f"[{datetime.now()}] Starting summary job...")
     db: Session = SessionLocal()
     try:
-        # 優先1: 未要約の会議録を取得
+        # 未要約または古いバージョンの要約を持つ会議録を取得
         meetings_to_summarize = (
             db.query(Meeting)
             .outerjoin(Summary, Meeting.issue_id == Summary.issue_id)
             .join(Speech, Meeting.issue_id == Speech.issue_id)
-            .filter(Summary.issue_id.is_(None))
             .group_by(Meeting.issue_id)
+            .having(func.coalesce(func.max(Summary.prompt_version), 0) < PROMPT_VERSION)
             .order_by(
+                func.coalesce(func.max(Summary.prompt_version), 0).asc(),
                 Meeting.session.desc(),
                 func.sum(func.length(Speech.speech)).desc(),
             )
             .limit(BATCH_SIZE)
             .all()
         )
-
-        # 取得した会議録のissue_idをセットに格納
-        summarized_issue_ids = {m.issue_id for m in meetings_to_summarize}
-
-        # 優先2: BATCH_SIZEに満たない場合、古いバージョンの要約を持つ会議録を追加
-        remaining_limit = BATCH_SIZE - len(meetings_to_summarize)
-        if remaining_limit > 0:
-            old_version_meetings = (
-                db.query(Meeting)
-                .join(Summary, Meeting.issue_id == Summary.issue_id)
-                .join(Speech, Meeting.issue_id == Speech.issue_id)
-                .filter(
-                    Summary.prompt_version < PROMPT_VERSION,
-                    Meeting.issue_id.notin_(summarized_issue_ids),
-                )
-                .group_by(Meeting.issue_id)
-                .order_by(
-                    Meeting.session.desc(),
-                    func.sum(func.length(Speech.speech)).desc(),
-                )
-                .limit(remaining_limit)
-                .all()
-            )
-            meetings_to_summarize.extend(old_version_meetings)
 
         if not meetings_to_summarize:
             print("No new meetings to summarize.")
