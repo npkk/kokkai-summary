@@ -19,6 +19,7 @@ $dbName = Get-Content -Path $dbNameFile -Raw
 
 docker compose exec -e PGPASSWORD=$password db pg_dump -U $user -d $dbName -F c -f /tmp/$dumpFileName
 docker compose cp db:/tmp/$dumpFileName $dumpFile
+docker compose exec db rm /tmp/$dumpFileName
 
 if ($LASTEXITCODE -eq 0) {
     Write-Host "Database dump completed successfully."
