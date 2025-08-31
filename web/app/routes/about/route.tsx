@@ -1,6 +1,24 @@
 export default function About() {
 	return (
-		<div className="p-4">
+		<main className="p-4">
+			{/* meta */}
+			<title>このサイトについて - 国会会議録要約システム(仮)</title>
+			<meta
+				name="description"
+				content="国会の会議録を要約しているシステムです。"
+			/>
+			<meta property="og:title" content="国会会議録要約システム(仮)" />
+			<meta property="og:locale" content="ja_JP" />
+			<meta
+				property="og:description"
+				content="国会の会議録を要約しているシステムです。"
+			/>
+			<meta
+				property="og:url"
+				content="https://kokkai-summary.sigsegvvv.xyz/about"
+			/>
+
+			{/* main */}
 			<div className="pb-8">
 				<h2 className="text-2xl">このサイトについて</h2>
 				<p className="mt-2">
@@ -41,6 +59,6 @@ export default function About() {
 					</li>
 				</ul>
 			</div>
-		</div>
+		</main>
 	);
 }

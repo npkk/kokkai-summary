@@ -1,9 +1,10 @@
 import { useCallback, useContext, useEffect, useState } from "react";
 import { useNavigate } from "react-router";
-import type { Session } from "~/routes/index/pulldown";
-import { MeetingNameDropdown, SessionDropdown } from "~/routes/index/pulldown";
 import { graphqlRequest } from "~/lib/api";
 import { SearchContext } from "~/lib/context";
+import type { Session } from "~/routes/index/pulldown";
+import { MeetingNameDropdown, SessionDropdown } from "~/routes/index/pulldown";
+import messages from "~/static/message.json?raw";
 
 // Define types for our data based on the API schema
 interface Meeting {
@@ -14,6 +15,27 @@ interface Meeting {
 	issue: string;
 	date: string;
 }
+
+interface Message {
+	key: string;
+	level: "info" | "warn";
+	text: string;
+}
+
+const parsedMessages: Message[] | null = (
+	JSON.parse(messages) as { messages: Message[] }
+).messages;
+
+const bgColor = (msg: Message) => {
+	switch (msg.level) {
+		case "info":
+			return "bg-green-700 dark:bg-green-900";
+		case "warn":
+			return "bg-yellow-700 dark:bg-yellow-900";
+		default:
+			return "";
+	}
+};
 
 // GraphQL Queries (文字列として定義)
 const GET_SESSIONS_QUERY = `
@@ -53,16 +75,6 @@ const SEARCH_MEETINGS_QUERY = `
     }
   }
 `;
-
-export function meta() {
-	return [
-		{ title: "国会会議録要約システム(仮)" },
-		{
-			name: "description",
-			content: "国会の会議録を要約しているシステムです。",
-		},
-	];
-}
 
 export default function SearchPage() {
 	const [selectedSession, setSelectedSession] = useState<number | null>(null);
@@ -170,7 +182,35 @@ export default function SearchPage() {
 	}, [searchContext, handleSearch]);
 
 	return (
-		<div className="p-4">
+		<main className="p-4">
+			{/* meta */}
+			<title>国会会議録要約システム(仮)</title>
+			<meta
+				name="description"
+				content="国会の会議録を要約しているシステムです。"
+			/>
+			<meta property="og:title" content="国会会議録要約システム(仮)" />
+			<meta property="og:locale" content="ja_JP" />
+			<meta
+				property="og:description"
+				content="国会の会議録を要約しているシステムです。"
+			/>
+			<meta property="og:url" content="https://kokkai-summary.sigsegvvv.xyz" />
+
+			{/* messages */}
+			{parsedMessages && (
+				<div className="flex flex-col mb-4">
+					{parsedMessages.map((msg) => (
+						<div
+							key={`message-${msg.key}`}
+							className={`${bgColor(msg)} text-white rounded my-2`}
+						>
+							<div className={`p-2 my-1 mx-1 opacity-100`}>{msg.text}</div>
+						</div>
+					))}
+				</div>
+			)}
+
 			{/* Session Dropdown */}
 			<SessionDropdown
 				sessions={sessions}
@@ -266,6 +306,6 @@ export default function SearchPage() {
 					</button>
 				))}
 			</div>
-		</div>
+		</main>
 	);
 }
