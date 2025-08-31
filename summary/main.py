@@ -20,6 +20,7 @@ async def run_summary_job():
             db.query(Meeting)
             .outerjoin(Summary, Meeting.issue_id == Summary.issue_id)
             .join(Speech, Meeting.issue_id == Speech.issue_id)
+            .where(Meeting.image_kind == "会議録")
             .group_by(Meeting.issue_id)
             .having(func.coalesce(func.max(Summary.prompt_version), 0) < PROMPT_VERSION)
             .order_by(
