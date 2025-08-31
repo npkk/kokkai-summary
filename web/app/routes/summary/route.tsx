@@ -104,6 +104,25 @@ export default function SummaryPage() {
 
 	return (
 		<main className="p-4">
+			{/* meta */}
+			<title>
+				{`${meeting.session} ${meeting.nameOfHouse} ${meeting.nameOfMeeting} ${meeting.issue} - 国会会議録要約システム(仮)`}
+			</title>
+			<meta
+				name="description"
+				content={`第${meeting.session}回 ${meeting.nameOfHouse} ${meeting.nameOfMeeting} ${meeting.issue}の会議録要約です。`}
+			/>
+			<meta property="og:title" content="国会会議録要約システム(仮)" />
+			<meta property="og:locale" content="ja_JP" />
+			<meta
+				property="og:description"
+				content={`第${meeting.session}回 ${meeting.nameOfHouse} ${meeting.nameOfMeeting} ${meeting.issue}の会議録要約です。`}
+			/>
+			<meta
+				property="og:url"
+				content={`https://kokkai-summary.sigsegvvv.xyz/summary/${meeting.issueId}`}
+			/>
+
 			{/* breadcrumb */}
 			<nav className="flex items-center text-sm text-gray-500 dark:text-gray-400 mb-4">
 				<button
@@ -140,6 +159,8 @@ export default function SummaryPage() {
 				<span className="mx-2">&gt;</span>
 				<span>{meeting.issue}</span>
 			</nav>
+
+			{/* meeting information */}
 			<h1 className="text-2xl font-bold">{meeting.nameOfMeeting}</h1>
 			<p className="text-lg text-gray-700 dark:text-gray-300">
 				{meeting.issue}
@@ -148,6 +169,7 @@ export default function SummaryPage() {
 				{meeting.nameOfHouse} - {new Date(meeting.date).toLocaleDateString()}
 			</p>
 
+			{/* main content */}
 			<div className="prose lg:prose-xl max-w-none dark:prose-invert">
 				{meeting.summary ? (
 					<StyledMarkdown>{meeting.summary.summary}</StyledMarkdown>

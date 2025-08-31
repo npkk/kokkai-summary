@@ -76,16 +76,6 @@ const SEARCH_MEETINGS_QUERY = `
   }
 `;
 
-export function meta() {
-	return [
-		{ title: "国会会議録要約システム(仮)" },
-		{
-			name: "description",
-			content: "国会の会議録を要約しているシステムです。",
-		},
-	];
-}
-
 export default function SearchPage() {
 	const [selectedSession, setSelectedSession] = useState<number | null>(null);
 	const [selectedMeetingName, setSelectedMeetingName] = useState<string | null>(
@@ -193,6 +183,20 @@ export default function SearchPage() {
 
 	return (
 		<main className="p-4">
+			{/* meta */}
+			<title>国会会議録要約システム(仮)</title>
+			<meta
+				name="description"
+				content="国会の会議録を要約しているシステムです。"
+			/>
+			<meta property="og:title" content="国会会議録要約システム(仮)" />
+			<meta property="og:locale" content="ja_JP" />
+			<meta
+				property="og:description"
+				content="国会の会議録を要約しているシステムです。"
+			/>
+			<meta property="og:url" content="https://kokkai-summary.sigsegvvv.xyz" />
+
 			{/* messages */}
 			{parsedMessages && (
 				<div className="flex flex-col mb-4">
