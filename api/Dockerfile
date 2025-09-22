@@ -36,4 +36,4 @@ RUN rm -f uv.lock
 RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --no-install-project
 
-CMD ["uv", "run", "fastapi", "run", "--reload"]
+CMD ["uv", "run", "fastapi", "run"]
