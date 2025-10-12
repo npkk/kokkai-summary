@@ -2,8 +2,10 @@ from typing import List, Optional
 from datetime import date
 
 import strawberry
+from strawberry.types import Info
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, and_, distinct
+from sqlalchemy import select, and_, distinct, func
+from sqlalchemy.orm import aliased
 
 from kokkai_db.schema import (
     Meeting as DBMeeting,
@@ -89,25 +91,7 @@ class Meeting:
             for s in speeches
         ]
 
-    @strawberry.field
-    async def summary(self, info) -> Optional[Summary]:
-        dataloaders: DataLoaders = info.context["dataloaders"]
-        summary: Optional[
-            DBSummary
-        ] = await dataloaders.latest_summaries_by_issue_id.load(self.issue_id)
-        if summary:
-            return Summary(
-                summary=summary.summary,
-                model=summary.model,
-                create_time=summary.create_time.isoformat()
-                if summary.create_time
-                else None,
-                prompt_version=summary.prompt_version,
-                update_time=summary.update_time.isoformat()
-                if summary.update_time
-                else None,
-            )
-        return None
+    summary: Optional[Summary]
 
     @strawberry.field
     async def session_info(self, info) -> Optional[Session]:
@@ -134,7 +118,7 @@ class Query:
     @strawberry.field
     async def meetings(
         self,
-        info,
+        info: Info,
         session: Optional[int] = None,
         issue_id: Optional[str] = None,
         name_of_house: Optional[str] = None,
@@ -146,47 +130,87 @@ class Query:
         if not session and not issue_id:
             raise ValueError("Either 'session' or 'issue_id' must be provided.")
 
-        conditions = []
-        if session:
-            conditions.append(DBMeeting.session == session)
-        if issue_id:
-            conditions.append(DBMeeting.issue_id == issue_id)
-        if name_of_house:
-            conditions.append(DBMeeting.name_of_house == name_of_house)
-        if name_of_meeting:
-            conditions.append(DBMeeting.name_of_meeting == name_of_meeting)
+        try:
+            conditions = []
+            if session:
+                conditions.append(DBMeeting.session == session)
+            if issue_id:
+                conditions.append(DBMeeting.issue_id == issue_id)
+            if name_of_house:
+                conditions.append(DBMeeting.name_of_house == name_of_house)
+            if name_of_meeting:
+                conditions.append(DBMeeting.name_of_meeting == name_of_meeting)
+            if has_summary:
+                conditions.append(DBSummary.issue_id is not None)
 
-        query = select(DBMeeting)
-        if has_summary:
-            query = query.join(DBSummary, DBMeeting.issue_id == DBSummary.issue_id)
-            # 218, 議院運営委員会で2件ダブるバグが起きたのでパッチ。もしかすると根本的に何かしくじってるかも
-            query = query.distinct(DBMeeting.issue_id)
-
-        db_meetings = (
-            (
-                await db_session.execute(
-                    query.where(and_(*conditions)).order_by(DBMeeting.issue_id)
+            subquery = (
+                select(
+                    DBMeeting,
+                    DBSummary,
+                    func.row_number()
+                    .over(
+                        partition_by=DBMeeting.issue_id,
+                        order_by=(
+                            DBSummary.prompt_version.desc(),
+                            DBSummary.update_time.desc(),
+                        ),
+                    )
+                    .label("rn"),
                 )
+                .select_from(DBMeeting)
+                .outerjoin(DBSummary, DBMeeting.issue_id == DBSummary.issue_id)
+                .where(and_(*conditions))
+                .subquery()
             )
-            .scalars()
-            .all()
-        )
-        return [
-            Meeting(
-                issue_id=m.issue_id,
-                image_kind=m.image_kind,
-                search_object=m.search_object,
-                session=m.session,
-                name_of_house=m.name_of_house,
-                name_of_meeting=m.name_of_meeting,
-                issue=m.issue,
-                date=m.date,
-                closing=m.closing,
-                meeting_url=m.meeting_url,
-                pdf_url=m.pdf_url,
+
+            MeetingAlias = aliased(DBMeeting, subquery)
+            SummaryAlias = aliased(DBSummary, subquery)
+
+            query = (
+                select(MeetingAlias, SummaryAlias)
+                .where(subquery.c.rn == 1)
+                .order_by(subquery.c.issue_id)
             )
-            for m in db_meetings
-        ]
+
+            results = (await db_session.execute(query)).all()
+
+            meetings = []
+            for meeting_obj, summary_obj in results:
+                summary_dto = None
+                if summary_obj and summary_obj.issue_id:
+                    summary_dto = Summary(
+                        summary=summary_obj.summary,
+                        model=summary_obj.model,
+                        prompt_version=summary_obj.prompt_version,
+                        create_time=summary_obj.create_time.isoformat()
+                        if summary_obj.create_time
+                        else None,
+                        update_time=summary_obj.update_time.isoformat()
+                        if summary_obj.update_time
+                        else None,
+                    )
+
+                meetings.append(
+                    Meeting(
+                        issue_id=meeting_obj.issue_id,
+                        image_kind=meeting_obj.image_kind,
+                        search_object=meeting_obj.search_object,
+                        session=meeting_obj.session,
+                        name_of_house=meeting_obj.name_of_house,
+                        name_of_meeting=meeting_obj.name_of_meeting,
+                        issue=meeting_obj.issue,
+                        date=meeting_obj.date,
+                        closing=meeting_obj.closing,
+                        meeting_url=meeting_obj.meeting_url,
+                        pdf_url=meeting_obj.pdf_url,
+                        summary=summary_dto,
+                    )
+                )
+            return meetings
+        except Exception as e:
+            await db_session.rollback()
+            print(e)
+            raise
 
     @strawberry.field
     async def speeches(self, info, speech_id: Optional[str] = None) -> List[Speech]:
