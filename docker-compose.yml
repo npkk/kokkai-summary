@@ -25,6 +25,9 @@ services:
       dockerfile: api/Dockerfile
     ports:
       - "4000:8000"
+      # - "5678:5678" # for debugpy
+    # command: # for debugpy
+      # uv run python -m debugpy --listen 0.0.0.0:5678 -m fastapi run # debugpy override
     networks:
       - sigsegvvv-xyz
       - kokkai-summary
