@@ -1,7 +1,7 @@
 services:
   db:
     container_name: kokkai-summary-db
-    image: postgres:latest
+    image: postgres:18
     environment:
       POSTGRES_USER_FILE: /run/secrets/postgres_user
       POSTGRES_PASSWORD_FILE: /run/secrets/postgres_password
@@ -12,7 +12,8 @@ services:
     networks:
       - kokkai-summary
     volumes:
-      - db_data:/var/lib/postgresql/data
+      - db_data:/var/lib/postgresql/18/docker
+      - ./postgresql.conf:/var/lib/postgresql/18/docker/postgresql.conf
     secrets:
       - postgres_user
       - postgres_password
