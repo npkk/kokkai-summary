@@ -5,6 +5,7 @@ from typing import List
 from google.genai.types import GenerateContentResponse
 from kokkai_db.schema import Meeting, Speech, Summary
 from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Session
 
 from app.config import MODEL, PROMPT_VERSION
@@ -12,13 +13,13 @@ from app.services.gemini_api import GeminiAPIClient
 from app.utils.text_processing import clean_summary_text
 
 
-def make_text(issue_id: str, db: Session) -> str:
+async def make_text(issue_id: str, db: AsyncSession) -> str:
     """
     会議内の全発言からspeechを取得し発言順に連結する
     """
     try:
         stmt_meeting = select(Meeting).where(Meeting.issue_id == issue_id)
-        meeting = db.execute(stmt_meeting).scalar_one_or_none()
+        meeting = (await db.execute(stmt_meeting)).scalar_one_or_none()
 
         if not meeting:
             print(f"Meeting with issue_id {issue_id} not found.")
@@ -29,7 +30,7 @@ def make_text(issue_id: str, db: Session) -> str:
             .where(Speech.issue_id == issue_id)
             .order_by(Speech.speech_order)
         )
-        speeches = db.execute(stmt_speeches).scalars().all()
+        speeches = (await db.execute(stmt_speeches)).scalars().all()
         return "\n".join([s for s in speeches if s is not None])
 
     except Exception as e:
@@ -37,12 +38,12 @@ def make_text(issue_id: str, db: Session) -> str:
         raise
 
 
-async def make_summary(issue_id: str, db: Session):
+async def make_summary(issue_id: str, db: AsyncSession):
     """
     要約を作成し、DBに保存する
     """
     try:
-        text = make_text(issue_id, db)
+        text = await make_text(issue_id, db)
         # textを一時ファイルに保存する
         # tmpディレクトリが存在しない場合は作成
         os.makedirs("tmp", exist_ok=True)
@@ -53,14 +54,14 @@ async def make_summary(issue_id: str, db: Session):
         gemini_client = GeminiAPIClient()
         response = await gemini_client.generate_content_from_file(temp_file_path)
 
-        create_summary_record(issue_id, db, response)
+        await create_summary_record(issue_id, db, response)
     except Exception as e:
         print(f"An error occurred during summary creation: {e}")
         raise
 
 
-def create_summary_record(
-    issue_id: str, db: Session, response: GenerateContentResponse
+async def create_summary_record(
+    issue_id: str, db: AsyncSession, response: GenerateContentResponse
 ):
     """
     生成された要約をDBに保存する
