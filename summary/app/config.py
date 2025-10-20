@@ -2,7 +2,8 @@ import os
 
 
 def get_secret(secret_name: str) -> str | None:
-    secret_path = f"/run/secrets/{secret_name}"
+    secret_path_base = os.environ.get("SECRET_PATH_BASE") or "/run/secrets"
+    secret_path = f"{secret_path_base}/{secret_name}"
     if os.path.exists(secret_path):
         with open(secret_path, "r") as f:
             return f.read().strip()

@@ -1,0 +1,18 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "summary",
+            "type":"debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/main.py",
+            "console": "integratedTerminal",
+            "python": "${workspaceFolder}/.venv/bin/python",
+            "justMyCode": true,
+            "env": {
+                "SECRET_PATH_BASE": "${workspaceFolder}/../secrets"
+            }
+        } 
+    ],
+}
+       
