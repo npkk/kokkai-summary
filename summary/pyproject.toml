@@ -22,3 +22,8 @@ extend = '../ruff_config.toml'
 [tool.pyright]
 venvPath = "."
 venv = ".venv"
+
+[dependency-groups]
+dev = [
+    "debugpy>=1.8.17",
+]
