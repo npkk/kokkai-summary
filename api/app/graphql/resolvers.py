@@ -248,7 +248,15 @@ class Query:
     @strawberry.field
     async def sessions(self, info) -> List[Session]:
         db_session: AsyncSession = info.context["session"]
-        db_sessions = (await db_session.execute(select(DBSession))).scalars().all()
+        db_sessions = (
+            (
+                await db_session.execute(
+                    select(DBSession).order_by(DBSession.session.desc())
+                )
+            )
+            .scalars()
+            .all()
+        )
         return [
             Session(
                 session=s.session,
