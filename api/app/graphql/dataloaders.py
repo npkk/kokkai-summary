@@ -59,7 +59,9 @@ async def load_sessions_by_session_numbers(
     session: AsyncSession, session_numbers: List[int]
 ) -> List[Optional[Session]]:
     sessions = await session.execute(
-        select(Session).where(Session.session.in_(session_numbers))
+        select(Session)
+        .where(Session.session.in_(session_numbers))
+        .order_by(Session.session)
     )
     sessions_by_number = {s.session: s for s in sessions.scalars().all()}
     return [
